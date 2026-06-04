@@ -76,7 +76,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             if (selectedPoint != null) PointDetailSheet(point: selectedPoint),
             const SizedBox(height: 12),
             Text(
-              'Google Maps bağlantısı sonraki aşamada aktif edilecek.',
+              'Harita görünümü demo modunda. Yol tarifi butonu harita uygulamasında açılır.',
               textAlign: TextAlign.center,
               style: AppTextStyles.caption.copyWith(
                 color: AppColors.textSecondary,

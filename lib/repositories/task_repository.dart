@@ -119,6 +119,38 @@ class TaskRepository {
     });
   }
 
+  Future<TaskProgressUpdateResult> updateProgressForPointReport({
+    required String userId,
+    required String reportType,
+  }) async {
+    final tasks = await matchingTasksForPointReport(reportType: reportType);
+    if (tasks.isEmpty) return const TaskProgressUpdateResult.empty();
+
+    return _firestore.runTransaction((transaction) async {
+      final userRef = _firestore.collection(FirestorePaths.users).doc(userId);
+      final userSnapshot = await transaction.get(userRef);
+      final result = await _updateProgressForTasksInTransaction(
+        transaction: transaction,
+        userId: userId,
+        tasks: tasks,
+        now: DateTime.now(),
+      );
+
+      final userData = userSnapshot.data() ?? <String, dynamic>{};
+      if (result.bonusPoints > 0) {
+        transaction.set(userRef, {
+          'totalPoints':
+              _intFromValue(userData['totalPoints']) + result.bonusPoints,
+          'weeklyPoints':
+              _intFromValue(userData['weeklyPoints']) + result.bonusPoints,
+          'updatedAt': DateTime.now(),
+        }, SetOptions(merge: true));
+      }
+
+      return result;
+    });
+  }
+
   Future<List<TaskModel>> matchingTasksForWasteLog({
     required String wasteType,
     String verificationMethod = VerificationMethods.qr,
@@ -137,7 +169,36 @@ class TaskRepository {
         .toList();
   }
 
+  Future<List<TaskModel>> matchingTasksForPointReport({
+    required String reportType,
+  }) async {
+    final snapshot = await _firestore
+        .collection(FirestorePaths.tasks)
+        .where('isActive', isEqualTo: true)
+        .get();
+
+    return snapshot.docs
+        .map((doc) => _parseTask(doc.data()))
+        .whereType<TaskModel>()
+        .where((task) => doesTaskMatchPointReport(task, reportType))
+        .toList();
+  }
+
   Future<TaskProgressUpdateResult> updateProgressForWasteLogInTransaction({
+    required Transaction transaction,
+    required String userId,
+    required List<TaskModel> tasks,
+    required DateTime now,
+  }) async {
+    return _updateProgressForTasksInTransaction(
+      transaction: transaction,
+      userId: userId,
+      tasks: tasks,
+      now: now,
+    );
+  }
+
+  Future<TaskProgressUpdateResult> _updateProgressForTasksInTransaction({
     required Transaction transaction,
     required String userId,
     required List<TaskModel> tasks,

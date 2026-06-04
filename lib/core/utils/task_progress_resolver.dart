@@ -26,6 +26,15 @@ bool doesTaskMatchWasteLog(TaskModel task, String wasteType) {
   };
 }
 
+bool doesTaskMatchPointReport(TaskModel task, String reportType) {
+  return switch (task.requiredAction) {
+    TaskActions.reportNearbyPoint => true,
+    TaskActions.winterReportPoint => true,
+    TaskActions.reportBrokenPoint => reportType == 'broken',
+    _ => false,
+  };
+}
+
 UserTaskProgressModel incrementProgress({
   required UserTaskProgressModel progress,
   required DateTime now,

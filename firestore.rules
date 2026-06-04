@@ -1,0 +1,154 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function isValidString(value, maxLength) {
+      return value is string && value.size() <= maxLength;
+    }
+
+    function isNonNegativeNumber(value) {
+      return (value is int || value is float) && value >= 0;
+    }
+
+    function userPointsAreValid() {
+      return isNonNegativeNumber(request.resource.data.totalPoints)
+        && isNonNegativeNumber(request.resource.data.weeklyPoints);
+    }
+
+    function validWasteVerificationMethod() {
+      return request.resource.data.verificationMethod in ['qr', 'photo', 'barcode'];
+    }
+
+    function validWasteStatus() {
+      return request.resource.data.status in ['approved', 'pending', 'rejected'];
+    }
+
+    function validPointReportType() {
+      return request.resource.data.reportType in [
+        'broken',
+        'full',
+        'missing',
+        'wrong_location',
+        'other'
+      ];
+    }
+
+    // MVP note: some point operations currently run in client transactions
+    // so QR bonuses, task bonuses, and reward spending can update user points.
+    // In production, validate these mutations with Cloud Functions + Admin SDK.
+    match /users/{userId} {
+      allow read: if signedIn();
+
+      allow create: if isOwner(userId)
+        && request.resource.data.uid == userId
+        && isValidString(request.resource.data.email, 256)
+        && userPointsAreValid();
+
+      allow update: if isOwner(userId)
+        && request.resource.data.uid == resource.data.uid
+        && userPointsAreValid();
+
+      allow delete: if false;
+
+      match /task_progress/{taskId} {
+        allow read: if isOwner(userId);
+
+        allow create, update: if isOwner(userId)
+          && request.resource.data.id == taskId
+          && request.resource.data.userId == userId
+          && request.resource.data.taskId == taskId
+          && isNonNegativeNumber(request.resource.data.currentCount)
+          && isNonNegativeNumber(request.resource.data.requiredCount);
+
+        allow delete: if false;
+      }
+    }
+
+    match /waste_logs/{logId} {
+      allow read: if isOwner(resource.data.userId);
+
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.id == logId
+        && validWasteVerificationMethod()
+        && validWasteStatus()
+        && isNonNegativeNumber(request.resource.data.pointsEarned);
+
+      allow update, delete: if false;
+    }
+
+    // Recycling points are written by seed/admin tooling.
+    match /recycling_points/{pointId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /tasks/{taskId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /rewards/{rewardId} {
+      allow read: if signedIn();
+      allow create, delete: if false;
+
+      // Demo redemption flow decrements stockCount in a client transaction.
+      // Production should move reward redemption and stock mutation to
+      // Cloud Functions + Admin SDK.
+      allow update: if signedIn()
+        && (resource.data.stockCount is int)
+        && (request.resource.data.stockCount is int)
+        && request.resource.data.stockCount == resource.data.stockCount - 1
+        && request.resource.data.stockCount >= 0
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['stockCount', 'updatedAt']);
+    }
+
+    match /redemptions/{redemptionId} {
+      allow read: if isOwner(resource.data.userId);
+
+      allow create: if signedIn()
+        && request.resource.data.id == redemptionId
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'active'
+        && isNonNegativeNumber(request.resource.data.pointsSpent)
+        && request.resource.data.pointsSpent > 0
+        && isValidString(request.resource.data.couponCode, 128);
+
+      allow update, delete: if false;
+    }
+
+    // Admin/municipality review is planned for Admin SDK or Cloud Functions.
+    match /point_reports/{reportId} {
+      allow read: if isOwner(resource.data.userId);
+
+      allow create: if signedIn()
+        && request.resource.data.id == reportId
+        && request.resource.data.userId == request.auth.uid
+        && isValidString(request.resource.data.pointId, 128)
+        && validPointReportType()
+        && request.resource.data.status == 'pending';
+
+      allow update, delete: if false;
+    }
+
+    // Leaderboards are public to authenticated users, but writes should be
+    // generated server-side in production.
+    match /leaderboard/{category}/entries/{entryId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

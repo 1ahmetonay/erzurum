@@ -22,6 +22,8 @@ class TaskActions {
   static const solveQuiz = 'solve_quiz';
   static const visitPoint = 'visit_point';
   static const reportNearbyPoint = 'report_nearby_point';
+  static const reportBrokenPoint = 'report_broken_point';
+  static const winterReportPoint = 'winter_report_point';
   static const winterCupLid = 'winter_cup_lid';
   static const winterGroupTask = 'winter_group_task';
 }

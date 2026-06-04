@@ -24,6 +24,10 @@ class FirestorePaths {
   static String userRedemptionsQuery(String userId) =>
       '$redemptions?userId=$userId';
   static String pointReport(String id) => '$pointReports/$id';
+  static String userPointReports(String userId) =>
+      '$pointReports?userId=$userId';
+  static String pointReportsByPoint(String pointId) =>
+      '$pointReports?pointId=$pointId';
   static String leaderboardCategory(String category) =>
       '$leaderboard/$category';
   static String leaderboardEntries(String category) =>
