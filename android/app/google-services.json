@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "177474028631",
+    "project_id": "atikavi-erzurum",
+    "storage_bucket": "atikavi-erzurum.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:177474028631:android:36dc9773bdaeb6f772cf12",
+        "android_client_info": {
+          "package_name": "com.atikavi.atikavi_erzurum"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "177474028631-gv012iv2bkhhnuga9tl0p07nd477uqlj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.atikavi.atikavi_erzurum",
+            "certificate_hash": "c0aec58f88e1ede97dd5dc0df2d21473fb7d2397"
+          }
+        },
+        {
+          "client_id": "177474028631-iq0lfi35al6jopqo8r75ierimmaacjnn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCOZAgov8vCp23BAcGQK9cX0I0DtqOY7pU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "177474028631-iq0lfi35al6jopqo8r75ierimmaacjnn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
