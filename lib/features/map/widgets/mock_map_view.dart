@@ -66,7 +66,7 @@ class MockMapView extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Erzurum merkez mock haritası',
+                        'Erzurum merkez geri dönüşüm noktaları',
                         style: AppTextStyles.label,
                       ),
                     ),

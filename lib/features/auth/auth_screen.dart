@@ -96,19 +96,6 @@ class AuthScreen extends ConsumerWidget {
                     isLoading ? 'Giriş yapılıyor...' : 'Google ile Giriş Yap',
                   ),
                 ),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: () {},
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(54),
-                    foregroundColor: AppColors.textOnPrimary,
-                    side: BorderSide(
-                      color: AppColors.textOnPrimary.withValues(alpha: 0.55),
-                    ),
-                  ),
-                  icon: const Icon(Icons.mail_outline),
-                  label: const Text('E-posta ile Giriş Yap'),
-                ),
                 const Spacer(),
                 const _NatureFooter(),
               ],

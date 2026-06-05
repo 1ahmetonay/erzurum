@@ -22,6 +22,13 @@ Client transaction ile puan artirma/dusurme production icin ideal degildir.
 
 ## Deploy
 
+Firebase CLI oturumu ve proje secimi:
+
+```sh
+firebase login --reauth
+firebase use atikavi-erzurum
+```
+
 Firestore rules:
 
 ```sh
@@ -38,4 +45,13 @@ Tum rules deploy:
 
 ```sh
 firebase deploy --only firestore:rules,storage
+```
+
+Deploy oncesi onerilen Flutter kontrolleri:
+
+```sh
+flutter pub get
+dart format lib test
+flutter analyze
+flutter test
 ```

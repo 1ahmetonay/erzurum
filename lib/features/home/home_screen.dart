@@ -40,7 +40,7 @@ class HomeScreen extends ConsumerWidget {
             .toList()
           ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
     final nearbyPoint = _nearbyPoint(pointsState.valueOrNull);
-    final wasteLogCount = wasteLogCountState.valueOrNull;
+    final wasteLogCount = wasteLogCountState.valueOrNull ?? 0;
 
     return Scaffold(
       body: SafeArea(
@@ -88,7 +88,9 @@ class HomeScreen extends ConsumerWidget {
                   children: [
                     StatCard(
                       title: 'Atık Kaydı',
-                      value: '${wasteLogCount ?? 38}',
+                      value: wasteLogCountState.isLoading
+                          ? '...'
+                          : '$wasteLogCount',
                       icon: Icons.delete_outline,
                       color: AppColors.primary,
                     ),
