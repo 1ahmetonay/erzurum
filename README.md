@@ -51,6 +51,10 @@ Debug modda `/dev/seed` ekranı Firestore demo verilerini yükler. Route yalnız
 
 Detaylı demo akışı ve QR içerikleri için [docs/DEMO_AKISI.md](/Users/ahmetonay/projects/atikavi_erzurum/docs/DEMO_AKISI.md) dosyasını kullan.
 
+## Android Build
+
+Android APK/AAB hazırlığı, package name, izinler ve release signing notları için [docs/ANDROID_BUILD.md](/Users/ahmetonay/projects/atikavi_erzurum/docs/ANDROID_BUILD.md) dosyasına bak.
+
 ## Test Komutları
 
 ```bash

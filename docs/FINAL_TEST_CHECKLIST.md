@@ -90,6 +90,14 @@
 ## Android Cihaz Testi
 
 - [ ] Google giriş çalışıyor.
+- [ ] Android APK kurulum testi tamamlandı.
+- [ ] Kamera izni testi tamamlandı.
+- [ ] QR okutma testi gerçek QR ile tamamlandı.
+- [ ] Fotoğraf yükleme testi Storage kaydıyla doğrulandı.
+- [ ] Firebase rules deploy testi tamamlandı.
+- [ ] Ödül kupon testi tamamlandı.
+- [ ] Bozuk bildir testi `point_reports` kaydıyla doğrulandı.
+- [ ] İnternet kapalı/Firestore hata testi kullanıcı dostu hata gösteriyor.
 - [ ] Kamera izni ve QR tarama çalışıyor.
 - [ ] Fotoğraf çekme ve galeri seçimi çalışıyor.
 - [ ] Harita yol tarifi dış uygulamada açılıyor.
