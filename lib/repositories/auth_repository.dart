@@ -12,6 +12,46 @@ class AuthRepository {
 
   Stream<User?> authStateChanges() => _firebaseAuth.authStateChanges();
 
+  Future<UserCredential> signInWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      return await _firebaseAuth.signInWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
+    } on FirebaseAuthException catch (error) {
+      throw AuthRepositoryException(_firebaseAuthMessage(error));
+    } on Object {
+      throw const AuthRepositoryException(
+        'Bir hata oluştu. Lütfen tekrar deneyin.',
+      );
+    }
+  }
+
+  Future<UserCredential> registerWithEmail({
+    required String displayName,
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final credential = await _firebaseAuth.createUserWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
+      await credential.user?.updateDisplayName(displayName.trim());
+      await credential.user?.reload();
+      return credential;
+    } on FirebaseAuthException catch (error) {
+      throw AuthRepositoryException(_firebaseAuthMessage(error));
+    } on Object {
+      throw const AuthRepositoryException(
+        'Bir hata oluştu. Lütfen tekrar deneyin.',
+      );
+    }
+  }
+
   Future<UserCredential?> signInWithGoogle() async {
     try {
       if (kIsWeb) {
@@ -35,6 +75,33 @@ class AuthRepository {
     } on Object catch (error) {
       throw AuthRepositoryException(
         'Google ile giriş sırasında bir sorun oluştu: $error',
+      );
+    }
+  }
+
+  Future<void> updateDisplayName(String displayName) async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user == null) return;
+      await user.updateDisplayName(displayName.trim());
+      await user.reload();
+    } on FirebaseAuthException catch (error) {
+      throw AuthRepositoryException(_firebaseAuthMessage(error));
+    } on Object {
+      throw const AuthRepositoryException(
+        'Profil güncellenirken bir hata oluştu. Lütfen tekrar deneyin.',
+      );
+    }
+  }
+
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _firebaseAuth.sendPasswordResetEmail(email: email.trim());
+    } on FirebaseAuthException catch (error) {
+      throw AuthRepositoryException(_firebaseAuthMessage(error));
+    } on Object {
+      throw const AuthRepositoryException(
+        'Bir hata oluştu. Lütfen tekrar deneyin.',
       );
     }
   }
@@ -64,13 +131,19 @@ class AuthRepository {
     return switch (error.code) {
       'account-exists-with-different-credential' =>
         'Bu e-posta adresi farklı bir giriş yöntemiyle kayıtlı.',
+      'email-already-in-use' => 'Bu e-posta zaten kullanılıyor.',
+      'invalid-credential' ||
+      'invalid-email' ||
+      'user-not-found' ||
+      'wrong-password' => 'E-posta veya şifre hatalı.',
       'network-request-failed' =>
         'Ağ bağlantısı kurulamadı. Lütfen bağlantını kontrol et.',
       'popup-blocked' =>
         'Tarayıcı giriş penceresini engelledi. Açılır pencereye izin ver.',
+      'weak-password' => 'Şifre en az 6 karakter olmalı.',
       'unauthorized-domain' =>
         'Bu alan adı Firebase Google girişi için yetkilendirilmemiş.',
-      _ => error.message ?? 'Firebase kimlik doğrulama hatası oluştu.',
+      _ => 'Bir hata oluştu. Lütfen tekrar deneyin.',
     };
   }
 }

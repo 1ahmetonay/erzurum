@@ -1,3 +1,5 @@
+import 'user_preferences_model.dart';
+
 class UserModel {
   const UserModel({
     required this.uid,
@@ -10,6 +12,7 @@ class UserModel {
     required this.level,
     required this.createdAt,
     required this.updatedAt,
+    this.preferences = const UserPreferencesModel(),
     this.photoUrl,
     this.schoolOrCampus,
   });
@@ -26,6 +29,7 @@ class UserModel {
   final int level;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final UserPreferencesModel preferences;
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
@@ -41,6 +45,9 @@ class UserModel {
       level: map['level'] as int? ?? 1,
       createdAt: _dateTimeFromValue(map['createdAt']),
       updatedAt: _dateTimeFromValue(map['updatedAt']),
+      preferences: UserPreferencesModel.fromMap(
+        (map['preferences'] as Map?)?.cast<String, dynamic>(),
+      ),
     );
   }
 
@@ -58,6 +65,7 @@ class UserModel {
       'level': level,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
+      'preferences': preferences.toMap(),
     };
   }
 
@@ -74,6 +82,7 @@ class UserModel {
     int? level,
     DateTime? createdAt,
     DateTime? updatedAt,
+    UserPreferencesModel? preferences,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -88,6 +97,7 @@ class UserModel {
       level: level ?? this.level,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      preferences: preferences ?? this.preferences,
     );
   }
 }

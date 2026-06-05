@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/user_model.dart';
+import '../models/user_preferences_model.dart';
 
 class UserRepository {
   UserRepository({FirebaseFirestore? firestore})
@@ -11,6 +12,9 @@ class UserRepository {
 
   CollectionReference<Map<String, dynamic>> get _users =>
       _firestore.collection('users');
+
+  CollectionReference<Map<String, dynamic>> get _feedback =>
+      _firestore.collection('feedback');
 
   Future<void> createUserIfNotExists(User firebaseUser) async {
     final docRef = _users.doc(firebaseUser.uid);
@@ -67,5 +71,53 @@ class UserRepository {
           user.copyWith(updatedAt: DateTime.now()).toMap(),
           SetOptions(merge: true),
         );
+  }
+
+  Future<void> updateDisplayName({
+    required String uid,
+    required String displayName,
+    String? email,
+    String? photoUrl,
+  }) {
+    final data = <String, dynamic>{
+      'uid': uid,
+      'displayName': displayName.trim(),
+      'updatedAt': DateTime.now(),
+    };
+    if (email != null) data['email'] = email;
+    if (photoUrl != null) data['photoUrl'] = photoUrl;
+
+    return _users.doc(uid).set(data, SetOptions(merge: true));
+  }
+
+  Future<void> updateUserPreferences({
+    required String uid,
+    required UserPreferencesModel preferences,
+  }) {
+    return _users.doc(uid).set({
+      'preferences': preferences.toMap(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> sendFeedback({
+    required String uid,
+    required String email,
+    required String message,
+  }) {
+    return _feedback.add({
+      'uid': uid,
+      'email': email,
+      'message': message.trim(),
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> softDeleteAccount(String uid) {
+    return _users.doc(uid).set({
+      'isDeleted': true,
+      'deletedAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 }

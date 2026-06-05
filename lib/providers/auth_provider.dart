@@ -36,6 +36,50 @@ class AuthController extends AutoDisposeAsyncNotifier<void> {
     }
   }
 
+  Future<void> signInWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    state = const AsyncLoading();
+    try {
+      final credential = await ref
+          .read(authRepositoryProvider)
+          .signInWithEmail(email: email, password: password);
+      await ref
+          .read(userRepositoryProvider)
+          .createUserIfNotExists(credential.user!);
+      state = const AsyncData(null);
+    } on Object catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      Error.throwWithStackTrace(error, stackTrace);
+    }
+  }
+
+  Future<void> registerWithEmail({
+    required String displayName,
+    required String email,
+    required String password,
+  }) async {
+    state = const AsyncLoading();
+    try {
+      final credential = await ref
+          .read(authRepositoryProvider)
+          .registerWithEmail(
+            displayName: displayName,
+            email: email,
+            password: password,
+          );
+      final user = credential.user;
+      if (user != null) {
+        await ref.read(userRepositoryProvider).createUserIfNotExists(user);
+      }
+      state = const AsyncData(null);
+    } on Object catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      Error.throwWithStackTrace(error, stackTrace);
+    }
+  }
+
   Future<void> signOut() async {
     state = const AsyncLoading();
     try {

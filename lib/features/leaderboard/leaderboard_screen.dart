@@ -26,6 +26,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
     final leaderboardState = ref.watch(
       leaderboardEntriesProvider(_selectedCategory),
     );
+    // TODO: Apply showOnLeaderboard filter in leaderboard query when privacy rules are finalized.
     final entries = _fallbackEntries(leaderboardState.valueOrNull);
     final currentUser = ref.watch(currentUserProvider).valueOrNull;
     final currentUserEntry = LeaderboardModel(

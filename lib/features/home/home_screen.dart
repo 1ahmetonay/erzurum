@@ -5,7 +5,6 @@ import '../../core/constants/mock_data.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../models/recycling_point_model.dart';
-import '../../models/user_model.dart';
 import '../../providers/recycling_point_provider.dart';
 import '../../providers/task_provider.dart';
 import '../../providers/user_provider.dart';
@@ -47,30 +46,6 @@ class HomeScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Merhaba, ${user.displayName} 👋',
-                        style: AppTextStyles.title,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Bugün Erzurum için temiz bir adım at.',
-                        style: AppTextStyles.body.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                _UserAvatar(user: user),
-              ],
-            ),
-            const SizedBox(height: 20),
             _PointBalanceCard(totalPoints: user.totalPoints, level: user.level),
             const SizedBox(height: 14),
             _WeeklyProgressCard(weeklyPoints: user.weeklyPoints),
@@ -148,35 +123,6 @@ class HomeScreen extends ConsumerWidget {
     return source.firstWhere(
       (point) => point.id.contains('yakutiye'),
       orElse: () => source.first,
-    );
-  }
-}
-
-class _UserAvatar extends StatelessWidget {
-  const _UserAvatar({required this.user});
-
-  final UserModel user;
-
-  @override
-  Widget build(BuildContext context) {
-    final displayName = user.displayName.trim();
-    final initial = displayName.isEmpty ? '?' : displayName.characters.first;
-    final photoUrl = user.photoUrl;
-
-    return CircleAvatar(
-      radius: 24,
-      backgroundColor: AppColors.primaryLight,
-      foregroundImage: photoUrl == null || photoUrl.isEmpty
-          ? null
-          : NetworkImage(photoUrl),
-      child: photoUrl == null || photoUrl.isEmpty
-          ? Text(
-              initial,
-              style: AppTextStyles.subtitle.copyWith(
-                color: AppColors.primaryDark,
-              ),
-            )
-          : null,
     );
   }
 }

@@ -14,9 +14,10 @@ void main() {
         child: const AtikAviApp(),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
 
-    expect(find.text('Google ile Giriş Yap'), findsOneWidget);
+    expect(find.text('Google ile devam et'), findsOneWidget);
     expect(find.byIcon(Icons.recycling), findsOneWidget);
   });
 }
