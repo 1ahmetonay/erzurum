@@ -17,9 +17,9 @@ class LeaderboardPodium extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: AppColors.outline),
+        border: Border.all(color: AppColors.outlineVariant),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,

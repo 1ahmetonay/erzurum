@@ -45,26 +45,19 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen> {
             Container(
               padding: const EdgeInsets.all(22),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.primary, AppColors.accent],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: AppColors.surfaceContainer,
                 borderRadius: BorderRadius.circular(28),
+                border: Border.all(color: AppColors.outline),
               ),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.eco,
-                    color: AppColors.textOnPrimary,
-                    size: 38,
-                  ),
+                  const Icon(Icons.eco, color: AppColors.primary, size: 38),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Text(
                       'Bakiyen: ${user.totalPoints} Dadaş Puan 🌱',
                       style: AppTextStyles.title.copyWith(
-                        color: AppColors.textOnPrimary,
+                        color: AppColors.primary,
                       ),
                     ),
                   ),

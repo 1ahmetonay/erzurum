@@ -313,7 +313,7 @@ class _LandingActions extends StatelessWidget {
       children: [
         _AuthActionButton(
           label: isLoading ? 'Giriş yapılıyor...' : 'Google ile devam et',
-          backgroundColor: AppColors.surface,
+          backgroundColor: AppColors.surfaceContainerLowest,
           foregroundColor: AppColors.textPrimary,
           onPressed: isLoading ? null : onGooglePressed,
           leading: isLoading
@@ -512,19 +512,19 @@ class _AuthTextField extends StatelessWidget {
       textInputAction: TextInputAction.next,
       decoration: InputDecoration(
         filled: true,
-        fillColor: AppColors.surface.withValues(alpha: 0.92),
+        fillColor: AppColors.surfaceContainerLowest.withValues(alpha: 0.92),
         prefixIcon: Icon(icon, color: AppColors.primary),
         labelText: label,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(22),
           borderSide: BorderSide(
-            color: AppColors.outline.withValues(alpha: 0.7),
+            color: AppColors.outlineVariant.withValues(alpha: 0.7),
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(22),
           borderSide: BorderSide(
-            color: AppColors.outline.withValues(alpha: 0.7),
+            color: AppColors.outlineVariant.withValues(alpha: 0.7),
           ),
         ),
         focusedBorder: OutlineInputBorder(
@@ -622,7 +622,7 @@ class _LoginIllustrationPanel extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    AppColors.surface.withValues(alpha: 0.12),
+                    AppColors.surfaceContainerLowest.withValues(alpha: 0.12),
                     AppColors.primaryDark.withValues(alpha: 0.1),
                   ],
                 ),
@@ -669,7 +669,7 @@ class _IllustrationIconCard extends StatelessWidget {
       width: 58,
       height: 58,
       decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.92),
+        color: AppColors.surfaceContainerLowest.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
@@ -701,7 +701,9 @@ class _SnowfallPainter extends CustomPainter {
       final y = ((flake.y + progress * flake.speed) % 1.0) * size.height;
       final drift = math.sin((progress + flake.y) * math.pi * 2) * 14;
       final x = ((flake.x + progress * flake.drift) % 1.0) * size.width + drift;
-      paint.color = AppColors.surface.withValues(alpha: flake.opacity);
+      paint.color = AppColors.surfaceContainerLowest.withValues(
+        alpha: flake.opacity,
+      );
       canvas.drawCircle(Offset(x, y), flake.radius, paint);
     }
   }

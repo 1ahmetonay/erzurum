@@ -74,7 +74,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/tasks',
-                builder: (context, state) => const TasksScreen(),
+                builder: (context, state) => TasksScreen(
+                  initialTaskId: state.uri.queryParameters['taskId'],
+                ),
               ),
             ],
           ),

@@ -27,9 +27,13 @@ class WasteTypeChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? color.withValues(alpha: 0.18) : AppColors.surface,
+          color: selected
+              ? color.withValues(alpha: 0.18)
+              : AppColors.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: selected ? color : AppColors.outline),
+          border: Border.all(
+            color: selected ? color : AppColors.outlineVariant,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

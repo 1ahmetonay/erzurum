@@ -31,19 +31,21 @@ class AppBottomNav extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
           child: DecoratedBox(
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: AppColors.surfaceContainerLowest,
               borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: AppColors.outlineVariant),
               boxShadow: const [
                 BoxShadow(
                   color: AppColors.shadow,
-                  blurRadius: 24,
-                  offset: Offset(0, 12),
+                  blurRadius: 18,
+                  offset: Offset(0, 8),
                 ),
               ],
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(28),
               child: NavigationBar(
+                backgroundColor: AppColors.surfaceContainerLowest,
                 selectedIndex: navigationShell.currentIndex,
                 onDestinationSelected: (index) {
                   navigationShell.goBranch(

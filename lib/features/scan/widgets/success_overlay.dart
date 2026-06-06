@@ -5,10 +5,11 @@ import '../../../core/theme/app_text_styles.dart';
 
 class SuccessOverlay extends StatelessWidget {
   const SuccessOverlay({
-    this.title = 'Kayıt tamamlandı',
-    this.message = '+10 Dadaş Puan kazandın!',
+    this.title = 'Başarılı!',
+    this.message = '+10 Dadaş Puan kazandınız.',
     this.bonusPoints = 0,
     this.completedTaskTitles = const [],
+    this.onDismiss,
     super.key,
   });
 
@@ -16,73 +17,84 @@ class SuccessOverlay extends StatelessWidget {
   final String message;
   final int bonusPoints;
   final List<String> completedTaskTitles;
+  final VoidCallback? onDismiss;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      constraints: const BoxConstraints(maxWidth: 420),
+      padding: const EdgeInsets.fromLTRB(28, 30, 28, 24),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: AppColors.primaryLight),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x33000000),
+            blurRadius: 28,
+            offset: Offset(0, 14),
+          ),
+        ],
       ),
-      child: Stack(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Positioned(
-            right: 10,
-            top: 6,
-            child: Icon(
-              Icons.auto_awesome,
-              color: AppColors.gold.withValues(alpha: 0.9),
+          Container(
+            width: 92,
+            height: 92,
+            decoration: const BoxDecoration(
+              color: AppColors.primaryContainer,
+              shape: BoxShape.circle,
+            ),
+            child: const Center(
+              child: CircleAvatar(
+                radius: 28,
+                backgroundColor: AppColors.onPrimaryContainer,
+                child: Icon(Icons.check, color: AppColors.primary, size: 36),
+              ),
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 58,
-                    height: 58,
-                    decoration: const BoxDecoration(
-                      color: AppColors.primaryLight,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.check,
-                      color: AppColors.primaryDark,
-                      size: 34,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(title, style: AppTextStyles.subtitle),
-                        const SizedBox(height: 4),
-                        Text(message, style: AppTextStyles.points),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              if (completedTaskTitles.isNotEmpty) ...[
-                const SizedBox(height: 14),
-                for (final taskTitle in completedTaskTitles.take(3)) ...[
-                  _CompletedTaskRow(title: taskTitle),
-                  const SizedBox(height: 6),
-                ],
-                if (bonusPoints > 0)
-                  Text(
-                    '+$bonusPoints bonus puan',
-                    style: AppTextStyles.body.copyWith(
-                      color: AppColors.success,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-              ],
+          const SizedBox(height: 24),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.display.copyWith(
+              color: AppColors.primary,
+              fontSize: 32,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.subtitle.copyWith(
+              color: AppColors.textSecondary,
+              fontSize: 18,
+            ),
+          ),
+          if (completedTaskTitles.isNotEmpty) ...[
+            const SizedBox(height: 18),
+            for (final taskTitle in completedTaskTitles.take(3)) ...[
+              _CompletedTaskRow(title: taskTitle),
+              const SizedBox(height: 6),
             ],
+            if (bonusPoints > 0)
+              Text(
+                '+$bonusPoints bonus puan',
+                style: AppTextStyles.body.copyWith(
+                  color: AppColors.success,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+          ],
+          const SizedBox(height: 28),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: onDismiss,
+              child: const Text('Harika!'),
+            ),
           ),
         ],
       ),

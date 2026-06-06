@@ -37,7 +37,7 @@ class QrScannerPlaceholder extends StatelessWidget {
                 height: 210,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: AppColors.primaryLight, width: 4),
+                  border: Border.all(color: AppColors.primaryFixed, width: 4),
                 ),
               ),
             ),
@@ -46,7 +46,7 @@ class QrScannerPlaceholder extends StatelessWidget {
               right: 24,
               bottom: 24,
               child: Text(
-                'QR kodu çerçevenin içine hizala',
+                'QR kodu çerçeve içine hizala',
                 textAlign: TextAlign.center,
                 style: AppTextStyles.body.copyWith(
                   color: AppColors.textOnPrimary,

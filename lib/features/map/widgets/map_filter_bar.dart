@@ -34,7 +34,7 @@ class MapFilterBar extends StatelessWidget {
               selected: filter.$2 == selectedType,
               label: Text(filter.$1),
               onSelected: (_) => onSelected(filter.$2),
-              selectedColor: AppColors.primaryLight,
+              selectedColor: AppColors.primaryFixed,
             ),
             const SizedBox(width: 8),
           ],

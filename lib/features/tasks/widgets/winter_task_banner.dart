@@ -11,12 +11,9 @@ class WinterTaskBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.winterBlue, AppColors.winterIce],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: AppColors.surfaceContainer,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.outline),
       ),
       child: Row(
         children: [
@@ -24,12 +21,12 @@ class WinterTaskBanner extends StatelessWidget {
             width: 54,
             height: 54,
             decoration: BoxDecoration(
-              color: AppColors.surface.withValues(alpha: 0.86),
+              color: AppColors.surfaceContainerLowest.withValues(alpha: 0.86),
               borderRadius: BorderRadius.circular(18),
             ),
             child: const Icon(
               Icons.ac_unit,
-              color: AppColors.winterBlue,
+              color: AppColors.primary,
               size: 30,
             ),
           ),
@@ -41,14 +38,14 @@ class WinterTaskBanner extends StatelessWidget {
                 Text(
                   '❄️ Kış Görevi Modu Aktif!',
                   style: AppTextStyles.subtitle.copyWith(
-                    color: AppColors.textOnPrimary,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Erzurum soğuğunda güvenli atık bırak, ekstra puan kazan.',
                   style: AppTextStyles.caption.copyWith(
-                    color: AppColors.textOnPrimary.withValues(alpha: 0.9),
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ],

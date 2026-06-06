@@ -24,7 +24,7 @@ class MockMapView extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.winterLight,
           borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: AppColors.outline),
+          border: Border.all(color: AppColors.outlineVariant),
         ),
         child: Stack(
           children: [
@@ -35,7 +35,9 @@ class MockMapView extends StatelessWidget {
                 right: 0,
                 child: Container(
                   height: 18,
-                  color: AppColors.surface.withValues(alpha: 0.66),
+                  color: AppColors.surfaceContainerLowest.withValues(
+                    alpha: 0.66,
+                  ),
                 ),
               ),
             for (final item in _positionedPoints(points.take(8).toList()))
@@ -57,7 +59,9 @@ class MockMapView extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppColors.surface.withValues(alpha: 0.92),
+                  color: AppColors.surfaceContainerLowest.withValues(
+                    alpha: 0.92,
+                  ),
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: Row(
@@ -175,7 +179,7 @@ class _Marker extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: AppColors.surface.withValues(alpha: 0.88),
+              color: AppColors.surfaceContainerLowest.withValues(alpha: 0.88),
               borderRadius: BorderRadius.circular(999),
             ),
             child: Text(

@@ -11,7 +11,9 @@ import 'widgets/task_card.dart';
 import 'widgets/winter_task_banner.dart';
 
 class TasksScreen extends ConsumerStatefulWidget {
-  const TasksScreen({super.key});
+  const TasksScreen({this.initialTaskId, super.key});
+
+  final String? initialTaskId;
 
   @override
   ConsumerState<TasksScreen> createState() => _TasksScreenState();
@@ -19,13 +21,22 @@ class TasksScreen extends ConsumerStatefulWidget {
 
 class _TasksScreenState extends ConsumerState<TasksScreen> {
   var _selectedType = TaskTypes.daily;
+  String? _handledInitialTaskId;
 
   @override
   Widget build(BuildContext context) {
     final tasksState = ref.watch(tasksWithProgressProvider);
-    final tasks = _sortedTasks(
-      tasksState.valueOrNull ?? MockData.tasks,
-    ).where((task) => task.type == _selectedType).toList();
+    final allTasks = _sortedTasks(tasksState.valueOrNull ?? MockData.tasks);
+    final initialTask = _taskById(allTasks, widget.initialTaskId);
+    if (initialTask != null && _handledInitialTaskId != widget.initialTaskId) {
+      _handledInitialTaskId = widget.initialTaskId;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() => _selectedType = initialTask.type);
+        _showTaskDetail(initialTask);
+      });
+    }
+    final tasks = allTasks.where((task) => task.type == _selectedType).toList();
 
     return Scaffold(
       body: SafeArea(
@@ -55,7 +66,11 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                 const _EmptyState(message: 'Bu kategoride aktif görev yok.')
               else
                 for (final task in tasks) ...[
-                  TaskCard(task: task),
+                  TaskCard(
+                    task: task,
+                    highlighted: task.id == widget.initialTaskId,
+                    onTap: () => _showTaskDetail(task),
+                  ),
                   const SizedBox(height: 12),
                 ],
             ],
@@ -95,8 +110,121 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     return [...tasks]..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
   }
 
+  TaskModel? _taskById(List<TaskModel> tasks, String? taskId) {
+    if (taskId == null || taskId.isEmpty) return null;
+    for (final task in tasks) {
+      if (task.id == taskId) return task;
+    }
+    return null;
+  }
+
+  Future<void> _showTaskDetail(TaskModel task) {
+    return showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: AppColors.surfaceContainerLowest,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (context) => _TaskDetailSheet(task: task),
+    );
+  }
+
   String _friendlyError(Object? error) {
     return 'Görevler yüklenemedi. Demo görevlerle devam edebilirsin.';
+  }
+}
+
+class _TaskDetailSheet extends StatelessWidget {
+  const _TaskDetailSheet({required this.task});
+
+  final TaskModel task;
+
+  @override
+  Widget build(BuildContext context) {
+    final requiredCount = task.requiredCount ?? 1;
+    final progress = requiredCount == 0
+        ? 0.0
+        : (task.currentCount / requiredCount).clamp(0.0, 1.0);
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        22,
+        4,
+        22,
+        MediaQuery.paddingOf(context).bottom + 28,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 58,
+                height: 58,
+                decoration: const BoxDecoration(
+                  color: AppColors.cardBg,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    task.iconEmoji,
+                    style: const TextStyle(fontSize: 28),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(task.title, style: AppTextStyles.title),
+                    const SizedBox(height: 4),
+                    Text(
+                      '+${task.pointReward} Dadaş Puan',
+                      style: AppTextStyles.label.copyWith(
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Text(
+            task.description,
+            style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 18),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: task.isCompleted ? 1 : progress,
+              minHeight: 12,
+              color: task.isCompleted ? AppColors.success : AppColors.primary,
+              backgroundColor: AppColors.surfaceLow,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Text(
+                '${task.currentCount}/$requiredCount tamamlandı',
+                style: AppTextStyles.caption.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const Spacer(),
+              Text(_typeLabel(task.type), style: AppTextStyles.caption),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -187,4 +315,15 @@ class _EmptyState extends StatelessWidget {
       child: Text(message, style: AppTextStyles.body),
     );
   }
+}
+
+String _typeLabel(String type) {
+  return switch (type) {
+    TaskTypes.daily => 'Günlük',
+    TaskTypes.weekly => 'Haftalık',
+    TaskTypes.social => 'Sosyal',
+    TaskTypes.education => 'Eğitim',
+    TaskTypes.winter => 'Kış',
+    _ => 'Görev',
+  };
 }

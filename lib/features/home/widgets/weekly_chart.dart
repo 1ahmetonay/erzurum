@@ -6,25 +6,45 @@ import '../../../core/theme/app_text_styles.dart';
 class WeeklyChart extends StatelessWidget {
   const WeeklyChart({super.key});
 
-  static const _values = [22, 48, 32, 70, 54, 88, 64];
+  static const _values = [44, 78, 66, 92, 74, 42, 36];
   static const _days = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.outline),
+        color: AppColors.surfaceContainer,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.outlineVariant.withValues(alpha: 0.6),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Haftalık Aktivite', style: AppTextStyles.subtitle),
-          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Haftalık Aktivite',
+                  style: AppTextStyles.title.copyWith(
+                    fontSize: 23,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              Text(
+                'Son 7 Gün',
+                style: AppTextStyles.caption.copyWith(
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           SizedBox(
-            height: 118,
+            height: 132,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -41,14 +61,9 @@ class WeeklyChart extends StatelessWidget {
                               alignment: Alignment.bottomCenter,
                               child: DecoratedBox(
                                 decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    begin: Alignment.bottomCenter,
-                                    end: Alignment.topCenter,
-                                    colors: [
-                                      AppColors.primary,
-                                      AppColors.primaryLight,
-                                    ],
-                                  ),
+                                  color: i == 2
+                                      ? AppColors.primary
+                                      : AppColors.primaryFixed,
                                   borderRadius: BorderRadius.circular(999),
                                 ),
                                 child: const SizedBox(width: 18),
@@ -56,7 +71,12 @@ class WeeklyChart extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          Text(_days[i], style: AppTextStyles.caption),
+                          Text(
+                            _days[i],
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
                         ],
                       ),
                     ),

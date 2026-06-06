@@ -6,9 +6,16 @@ import '../../../models/task_model.dart';
 import '../../../shared/widgets/puan_badge.dart';
 
 class TaskCard extends StatelessWidget {
-  const TaskCard({required this.task, super.key});
+  const TaskCard({
+    required this.task,
+    this.onTap,
+    this.highlighted = false,
+    super.key,
+  });
 
   final TaskModel task;
+  final VoidCallback? onTap;
+  final bool highlighted;
 
   @override
   Widget build(BuildContext context) {
@@ -19,72 +26,89 @@ class TaskCard extends StatelessWidget {
     final accent = task.isWinterOnly ? AppColors.winterBlue : AppColors.primary;
     final statusColor = task.isCompleted ? AppColors.success : accent;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: task.isCompleted ? AppColors.cardBg : AppColors.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
+    final borderColor = highlighted
+        ? AppColors.primary
+        : task.isCompleted
+        ? AppColors.success.withValues(alpha: 0.28)
+        : task.isWinterOnly
+        ? AppColors.winterIce
+        : AppColors.outlineVariant;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
           color: task.isCompleted
-              ? AppColors.success.withValues(alpha: 0.28)
-              : task.isWinterOnly
-              ? AppColors.winterIce
-              : AppColors.outline,
+              ? AppColors.cardBg
+              : AppColors.surfaceContainer,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: borderColor, width: highlighted ? 1.6 : 1),
+          boxShadow: highlighted
+              ? const [
+                  BoxShadow(
+                    color: AppColors.shadow,
+                    blurRadius: 18,
+                    offset: Offset(0, 8),
+                  ),
+                ]
+              : null,
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(task.iconEmoji, style: const TextStyle(fontSize: 30)),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(task.title, style: AppTextStyles.subtitle),
-                    const SizedBox(height: 4),
-                    Text(task.description, style: AppTextStyles.caption),
-                  ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(task.iconEmoji, style: const TextStyle(fontSize: 30)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(task.title, style: AppTextStyles.subtitle),
+                      const SizedBox(height: 4),
+                      Text(task.description, style: AppTextStyles.caption),
+                    ],
+                  ),
                 ),
-              ),
-              if (task.isCompleted)
-                const Icon(Icons.check_circle, color: AppColors.success)
-              else
-                PuanBadge(points: task.pointReward, compact: true),
-            ],
-          ),
-          const SizedBox(height: 14),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              value: task.isCompleted ? 1 : progress,
-              minHeight: 10,
-              color: task.isCompleted ? AppColors.success : accent,
-              backgroundColor: AppColors.surfaceLow,
+                if (task.isCompleted)
+                  const Icon(Icons.check_circle, color: AppColors.success)
+                else
+                  PuanBadge(points: task.pointReward, compact: true),
+              ],
             ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _StatusChip(
-                label: task.isCompleted ? 'Tamamlandı' : 'Başla',
-                color: statusColor,
+            const SizedBox(height: 14),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                value: task.isCompleted ? 1 : progress,
+                minHeight: 10,
+                color: task.isCompleted ? AppColors.success : accent,
+                backgroundColor: AppColors.surfaceLow,
               ),
-              const SizedBox(width: 8),
-              Text(
-                '${task.currentCount}/$requiredCount',
-                style: AppTextStyles.caption.copyWith(
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                _StatusChip(
+                  label: task.isCompleted ? 'Tamamlandı' : 'Başla',
                   color: statusColor,
-                  fontWeight: FontWeight.w700,
                 ),
-              ),
-              const Spacer(),
-              Text(_typeLabel(task.type), style: AppTextStyles.caption),
-            ],
-          ),
-        ],
+                const SizedBox(width: 8),
+                Text(
+                  '${task.currentCount}/$requiredCount',
+                  style: AppTextStyles.caption.copyWith(
+                    color: statusColor,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const Spacer(),
+                Text(_typeLabel(task.type), style: AppTextStyles.caption),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

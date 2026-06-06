@@ -16,7 +16,7 @@ class AccountSettingsSheet extends ConsumerStatefulWidget {
       useSafeArea: true,
       isScrollControlled: true,
       showDragHandle: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.surfaceContainerLowest,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
@@ -452,7 +452,9 @@ class _SettingsSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.outline.withValues(alpha: 0.65)),
+        border: Border.all(
+          color: AppColors.outlineVariant.withValues(alpha: 0.65),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -507,7 +509,7 @@ class _SettingsSwitchTile extends StatelessWidget {
       onChanged: active ? onChanged : null,
       secondary: Icon(
         icon,
-        color: active ? AppColors.primary : AppColors.outline,
+        color: active ? AppColors.primary : AppColors.outlineVariant,
       ),
       title: Text(
         title,
@@ -653,7 +655,7 @@ Future<T?> _showChoiceSheet<T>({
     context: context,
     useSafeArea: true,
     showDragHandle: true,
-    backgroundColor: AppColors.surface,
+    backgroundColor: AppColors.surfaceContainerLowest,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
     ),

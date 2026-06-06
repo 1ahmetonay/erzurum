@@ -4,14 +4,18 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 
+enum ScanCameraMode { qr, barcode }
+
 class QrScannerView extends StatefulWidget {
   const QrScannerView({
     required this.onQrDetected,
+    this.mode = ScanCameraMode.qr,
     this.isProcessing = false,
     super.key,
   });
 
   final ValueChanged<String> onQrDetected;
+  final ScanCameraMode mode;
   final bool isProcessing;
 
   @override
@@ -19,17 +23,36 @@ class QrScannerView extends StatefulWidget {
 }
 
 class _QrScannerViewState extends State<QrScannerView> {
-  final MobileScannerController _controller = MobileScannerController(
-    detectionSpeed: DetectionSpeed.noDuplicates,
-    formats: const [BarcodeFormat.qrCode],
-  );
+  late final MobileScannerController _controller;
 
   String? _lastCode;
   DateTime? _lastDetectedAt;
   var _isProcessing = false;
 
   @override
+  void initState() {
+    super.initState();
+    _controller = MobileScannerController(
+      detectionSpeed: DetectionSpeed.noDuplicates,
+      formats: widget.mode == ScanCameraMode.qr
+          ? const [BarcodeFormat.qrCode]
+          : const [
+              BarcodeFormat.code128,
+              BarcodeFormat.code39,
+              BarcodeFormat.code93,
+              BarcodeFormat.codabar,
+              BarcodeFormat.ean13,
+              BarcodeFormat.ean8,
+              BarcodeFormat.itf,
+              BarcodeFormat.upcA,
+              BarcodeFormat.upcE,
+            ],
+    );
+  }
+
+  @override
   void dispose() {
+    _controller.stop();
     _controller.dispose();
     super.dispose();
   }
@@ -57,11 +80,13 @@ class _QrScannerViewState extends State<QrScannerView> {
             ),
             Center(
               child: Container(
-                width: 210,
-                height: 210,
+                width: widget.mode == ScanCameraMode.qr ? 210 : 260,
+                height: widget.mode == ScanCameraMode.qr ? 210 : 116,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: AppColors.primaryLight, width: 4),
+                  borderRadius: BorderRadius.circular(
+                    widget.mode == ScanCameraMode.qr ? 24 : 18,
+                  ),
+                  border: Border.all(color: AppColors.primaryFixed, width: 4),
                 ),
               ),
             ),
@@ -90,7 +115,9 @@ class _QrScannerViewState extends State<QrScannerView> {
               right: 24,
               bottom: 24,
               child: Text(
-                'QR kodu çerçevenin içine hizala',
+                widget.mode == ScanCameraMode.qr
+                    ? 'QR kodu çerçeve içine hizala'
+                    : 'Barkodu çerçeve içine hizala',
                 textAlign: TextAlign.center,
                 style: AppTextStyles.body.copyWith(
                   color: AppColors.textOnPrimary,
@@ -145,7 +172,9 @@ class _QrScannerViewState extends State<QrScannerView> {
     if (error.errorCode == MobileScannerErrorCode.permissionDenied) {
       return 'Kamera izni verilmedi. Ayarlardan kamera erişimine izin ver.';
     }
-    return 'QR tarama bu platformda desteklenmeyebilir. Demo QR butonlarını kullanabilirsin.';
+    return widget.mode == ScanCameraMode.qr
+        ? 'QR tarama bu platformda desteklenmeyebilir. Demo QR butonlarını kullanabilirsin.'
+        : 'Barkod tarama bu platformda desteklenmeyebilir. Demo barkod kartını kullanabilirsin.';
   }
 }
 

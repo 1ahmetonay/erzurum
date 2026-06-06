@@ -17,7 +17,7 @@ class ProfileMenuSheet extends ConsumerWidget {
       useSafeArea: true,
       isScrollControlled: true,
       showDragHandle: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.surfaceContainerLowest,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
@@ -63,7 +63,7 @@ class ProfileMenuSheet extends ConsumerWidget {
             Center(
               child: CircleAvatar(
                 radius: 36,
-                backgroundColor: AppColors.primaryLight,
+                backgroundColor: AppColors.primaryFixed,
                 foregroundImage: photoUrl == null
                     ? null
                     : NetworkImage(photoUrl),
@@ -226,7 +226,7 @@ void _showInfoSheet(
     context: context,
     useSafeArea: true,
     showDragHandle: true,
-    backgroundColor: AppColors.surface,
+    backgroundColor: AppColors.surfaceContainerLowest,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
     ),

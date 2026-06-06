@@ -8,7 +8,7 @@ class PuanBadge extends StatelessWidget {
     required this.points,
     this.compact = false,
     this.foregroundColor = AppColors.primary,
-    this.backgroundColor = AppColors.primaryLight,
+    this.backgroundColor = AppColors.primaryFixed,
     super.key,
   });
 

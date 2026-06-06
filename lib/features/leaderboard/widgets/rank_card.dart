@@ -15,10 +15,14 @@ class RankCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isCurrentUser ? AppColors.cardBg : AppColors.surface,
+        color: isCurrentUser
+            ? AppColors.cardBg
+            : AppColors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: isCurrentUser ? AppColors.primaryLight : AppColors.outline,
+          color: isCurrentUser
+              ? AppColors.primaryFixed
+              : AppColors.outlineVariant,
         ),
       ),
       child: Row(

@@ -100,7 +100,7 @@ class _HeaderAvatar extends StatelessWidget {
           ],
         ),
         child: CircleAvatar(
-          backgroundColor: AppColors.primaryLight,
+          backgroundColor: AppColors.primaryFixed,
           foregroundImage: photoUrl == null || photoUrl.isEmpty
               ? null
               : NetworkImage(photoUrl),

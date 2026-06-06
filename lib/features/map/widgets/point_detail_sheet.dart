@@ -21,7 +21,7 @@ class PointDetailSheet extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(28),
         boxShadow: const [
           BoxShadow(
@@ -109,7 +109,7 @@ class PointDetailSheet extends StatelessWidget {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: AppColors.surface,
+          backgroundColor: AppColors.surfaceContainerLowest,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
@@ -130,9 +130,9 @@ class PointDetailSheet extends StatelessWidget {
                   Center(
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: AppColors.surfaceContainerLowest,
                         borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: AppColors.outline),
+                        border: Border.all(color: AppColors.outlineVariant),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(12),
@@ -140,7 +140,7 @@ class PointDetailSheet extends StatelessWidget {
                           data: qrValue,
                           version: QrVersions.auto,
                           size: 180,
-                          backgroundColor: AppColors.surface,
+                          backgroundColor: AppColors.surfaceContainerLowest,
                         ),
                       ),
                     ),
@@ -204,7 +204,7 @@ class _PointReportDialogState extends ConsumerState<PointReportDialog> {
     final isLoading = submitState.isLoading;
 
     return AlertDialog(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.surfaceContainerLowest,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       title: const Text('Nokta Bildirimi', style: AppTextStyles.title),
       content: SingleChildScrollView(
