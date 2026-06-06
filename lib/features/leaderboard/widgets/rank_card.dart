@@ -67,6 +67,9 @@ class RankCard extends StatelessWidget {
       LeaderboardCategories.neighborhood => 'Mahalle',
       LeaderboardCategories.campus => 'Kampüs',
       LeaderboardCategories.school => 'Okul',
+      LeaderboardCategories.districtYakutiye => 'Yakutiye',
+      LeaderboardCategories.districtPalandoken => 'Palandöken',
+      LeaderboardCategories.districtAziziye => 'Aziziye',
       _ => 'Sıralama',
     };
   }

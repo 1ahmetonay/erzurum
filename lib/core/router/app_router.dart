@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/admin/dev_seed_screen.dart';
 import '../../features/auth/auth_screen.dart';
+import '../../features/education/education_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/leaderboard/leaderboard_screen.dart';
 import '../../features/map/map_screen.dart';
@@ -77,6 +78,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) => TasksScreen(
                   initialTaskId: state.uri.queryParameters['taskId'],
                 ),
+              ),
+              GoRoute(
+                path: '/education',
+                builder: (context, state) => const EducationScreen(),
               ),
             ],
           ),

@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../education/data/education_content_repository.dart';
 
-class EducationalRecyclingCard extends StatelessWidget {
+class EducationalRecyclingCard extends ConsumerWidget {
   const EducationalRecyclingCard({super.key});
 
-  static const _paragraphs = [
-    'Sıfır atık yaklaşımı, atıkları kaynağında azaltmayı, yeniden kullanmayı ve geri dönüştürülebilir malzemeleri ekonomiye kazandırmayı hedefler.',
-    'Plastik, cam, kağıt, metal ve elektronik atıkların ayrı toplanması hem çevre kirliliğini azaltır hem de Erzurum’da daha temiz bir yaşam alanı oluşturur.',
-    'Toplum bilinci arttıkça geri dönüşüm noktaları daha verimli kullanılır ve atıklar doğaya karışmadan doğru şekilde işlenir.',
-  ];
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final contentState = ref.watch(educationContentProvider);
+    final content = contentState.valueOrNull ?? EducationContent.fallback();
+    final previewSections = content.previewSections;
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -44,17 +45,12 @@ class EducationalRecyclingCard extends StatelessWidget {
             style: AppTextStyles.title.copyWith(fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 14),
-          for (final paragraph in _paragraphs) ...[
-            Text(
-              paragraph,
-              style: AppTextStyles.body.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 10),
+          for (final section in previewSections) ...[
+            _PreviewTopic(title: section.title, summary: section.summary),
+            const SizedBox(height: 12),
           ],
           TextButton.icon(
-            onPressed: () => _showComingSoonDialog(context),
+            onPressed: () => context.push('/education'),
             style: TextButton.styleFrom(
               foregroundColor: AppColors.primary,
               padding: EdgeInsets.zero,
@@ -76,30 +72,52 @@ class EducationalRecyclingCard extends StatelessWidget {
       ),
     );
   }
+}
 
-  void _showComingSoonDialog(BuildContext context) {
-    // TODO: İleride Gemini 2.5 Flash entegrasyonu ile kullanıcıların geri dönüşüm hakkında soru sorabileceği eğitim/asistan alanı eklenecek.
-    showDialog<void>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: AppColors.surfaceContainerLowest,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
+class _PreviewTopic extends StatelessWidget {
+  const _PreviewTopic({required this.title, required this.summary});
+
+  final String title;
+  final String summary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          margin: const EdgeInsets.only(top: 8),
+          decoration: const BoxDecoration(
+            color: AppColors.primary,
+            shape: BoxShape.circle,
           ),
-          title: const Text('Yakında', style: AppTextStyles.title),
-          content: Text(
-            'Bu alanda geri dönüşüm, sıfır atık ve çevre bilinci hakkında kısa eğitimler yer alacak.',
-            style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: AppTextStyles.subtitle.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              if (summary.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  summary,
+                  style: AppTextStyles.body.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ],
           ),
-          actions: [
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Tamam'),
-            ),
-          ],
-        );
-      },
+        ),
+      ],
     );
   }
 }

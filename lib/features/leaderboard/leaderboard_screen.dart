@@ -7,9 +7,10 @@ import '../../core/theme/app_text_styles.dart';
 import '../../models/leaderboard_model.dart';
 import '../../providers/leaderboard_provider.dart';
 import '../../providers/user_provider.dart';
-import '../../shared/widgets/section_header.dart';
-import 'widgets/leaderboard_podium.dart';
-import 'widgets/rank_card.dart';
+import 'widgets/current_user_rank_card.dart';
+import 'widgets/leaderboard_filter_chips.dart';
+import 'widgets/leaderboard_list_item.dart';
+import 'widgets/top_three_podium.dart';
 
 class LeaderboardScreen extends ConsumerStatefulWidget {
   const LeaderboardScreen({super.key});
@@ -31,127 +32,82 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
     final currentUser = ref.watch(currentUserProvider).valueOrNull;
     final currentUserEntry = LeaderboardModel(
       id: currentUser?.uid ?? MockData.currentUser.uid,
-      category: LeaderboardCategories.individual,
+      category: _selectedCategory,
       userId: currentUser?.uid ?? MockData.currentUser.uid,
-      name: 'Sen',
+      name: currentUser?.displayName.isNotEmpty == true
+          ? currentUser!.displayName
+          : 'Dadaş',
+      photoUrl: currentUser?.photoUrl,
       weeklyPoints: currentUser?.weeklyPoints ?? 350,
       totalPoints: currentUser?.totalPoints ?? MockData.currentUser.totalPoints,
       rank: 124,
     );
 
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                children: [
-                  const SectionHeader(
-                    title: 'Sıralama Tablosu',
-                    subtitle: 'Haftalık geri dönüşüm liderleri',
-                  ),
-                  const SizedBox(height: 16),
-                  _LeaderboardTabs(
-                    selectedCategory: _selectedCategory,
-                    onSelected: (category) {
-                      setState(() => _selectedCategory = category);
-                    },
-                  ),
-                  const SizedBox(height: 18),
-                  if (leaderboardState.isLoading && !leaderboardState.hasValue)
-                    const _LoadingState()
+      backgroundColor: AppColors.surfaceContainerLow,
+      body: Column(
+        children: [
+          const SizedBox(height: 14),
+          LeaderboardFilterChips(
+            selectedCategory: _selectedCategory,
+            onSelected: (category) {
+              setState(() => _selectedCategory = category);
+            },
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              children: [
+                if (leaderboardState.isLoading && !leaderboardState.hasValue)
+                  const _LoadingState()
+                else ...[
+                  if (leaderboardState.hasError) ...[
+                    const _ErrorState(
+                      message:
+                          'Sıralama yüklenemedi. Demo sıralamayla devam edebilirsin.',
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  if (entries.length < 3)
+                    const _EmptyState(message: 'Bu kategoride sıralama yok.')
                   else ...[
-                    if (leaderboardState.hasError) ...[
-                      const _ErrorState(
-                        message:
-                            'Sıralama yüklenemedi. Demo sıralamayla devam edebilirsin.',
-                      ),
+                    TopThreePodium(entries: entries),
+                    const SizedBox(height: 16),
+                    for (final entry in entries.skip(3)) ...[
+                      LeaderboardListItem(entry: entry),
                       const SizedBox(height: 12),
                     ],
-                    if (entries.isEmpty)
-                      const _EmptyState(message: 'Bu kategoride sıralama yok.')
-                    else ...[
-                      LeaderboardPodium(entries: entries),
-                      const SizedBox(height: 18),
-                      for (final entry in entries) ...[
-                        RankCard(
-                          entry: entry,
-                          isCurrentUser:
-                              entry.userId == currentUser?.uid ||
-                              entry.userId == MockData.currentUser.uid,
-                        ),
-                        const SizedBox(height: 10),
-                      ],
-                    ],
                   ],
-                  const SizedBox(height: 8),
-                  Text(
-                    'Sıralama Pazartesi sıfırlanır',
-                    textAlign: TextAlign.center,
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
                 ],
-              ),
+                const SizedBox(height: 4),
+                Text(
+                  'Sıralama Pazartesi sıfırlanır',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
             ),
-            SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-                child: RankCard(entry: currentUserEntry, isCurrentUser: true),
-              ),
+          ),
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              child: CurrentUserRankCard(entry: currentUserEntry),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   List<LeaderboardModel> _fallbackEntries(List<LeaderboardModel>? entries) {
     final source = entries == null || entries.isEmpty
-        ? (_selectedCategory == LeaderboardCategories.individual
-              ? MockData.leaderboard
-              : const <LeaderboardModel>[])
+        ? _demoEntries(_selectedCategory)
         : entries;
     return [...source]..sort((a, b) => a.rank.compareTo(b.rank));
-  }
-}
-
-class _LeaderboardTabs extends StatelessWidget {
-  const _LeaderboardTabs({
-    required this.selectedCategory,
-    required this.onSelected,
-  });
-
-  final String selectedCategory;
-  final ValueChanged<String> onSelected;
-
-  static const _items = [
-    ('Bireysel', LeaderboardCategories.individual),
-    ('Mahalle', LeaderboardCategories.neighborhood),
-    ('Kampüs', LeaderboardCategories.campus),
-    ('Okul', LeaderboardCategories.school),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          for (final item in _items) ...[
-            ChoiceChip(
-              selected: item.$2 == selectedCategory,
-              label: Text(item.$1),
-              onSelected: (_) => onSelected(item.$2),
-            ),
-            const SizedBox(width: 8),
-          ],
-        ],
-      ),
-    );
   }
 }
 
@@ -161,7 +117,7 @@ class _LoadingState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 48),
+      padding: EdgeInsets.symmetric(vertical: 72),
       child: Center(child: CircularProgressIndicator()),
     );
   }
@@ -205,4 +161,85 @@ class _EmptyState extends StatelessWidget {
       child: Text(message, style: AppTextStyles.body),
     );
   }
+}
+
+List<LeaderboardModel> _demoEntries(String category) {
+  final rows = switch (category) {
+    LeaderboardCategories.neighborhood => const [
+      ('Yıldızkent', 12840, 42100),
+      ('Şükrüpaşa', 11320, 38900),
+      ('Yenişehir', 10210, 35100),
+      ('Yakutiye Merkez', 9840, 33700),
+      ('Aziziye Merkez', 8620, 29600),
+      ('Palandöken Merkez', 8210, 28400),
+      ('Cumhuriyet', 7540, 26300),
+    ],
+    LeaderboardCategories.school => const [
+      ('Erzurum Anadolu Lisesi', 8240, 24100),
+      ('Yakutiye Ortaokulu', 7160, 21800),
+      ('Palandöken İlkokulu', 6420, 19200),
+      ('Aziziye Fen Lisesi', 5980, 18100),
+      ('Şükrüpaşa İlkokulu', 5310, 16400),
+      ('Mecidiye Ortaokulu', 4860, 15100),
+      ('Atatürk Mesleki Lisesi', 4210, 13700),
+    ],
+    LeaderboardCategories.campus => const [
+      ('Atatürk Üniversitesi', 18420, 62300),
+      ('Erzurum Teknik Üniversitesi', 13950, 48700),
+      ('Kazım Karabekir Kampüsü', 11280, 39400),
+      ('Sağlık Bilimleri Kampüsü', 9840, 33100),
+      ('Açıköğretim Topluluğu', 8620, 28700),
+      ('Mühendislik Topluluğu', 7410, 24400),
+      ('Güzel Sanatlar Topluluğu', 6380, 21900),
+    ],
+    LeaderboardCategories.districtYakutiye => const [
+      ('Yakutiye Merkez', 14320, 44200),
+      ('Muratpaşa', 12640, 39800),
+      ('Kavak', 11450, 35400),
+      ('Lalapaşa', 10220, 33100),
+      ('Rabia Ana', 9430, 30200),
+      ('Üniversite', 8720, 27600),
+      ('Terminal', 7950, 25100),
+    ],
+    LeaderboardCategories.districtPalandoken => const [
+      ('Yıldızkent', 13840, 42100),
+      ('Yenişehir', 11960, 37600),
+      ('Palandöken Merkez', 10780, 34200),
+      ('Hüseyin Avni Ulaş', 9820, 31800),
+      ('Adnan Menderes', 8910, 28700),
+      ('Müftü Solakzade', 8340, 26400),
+      ('Kayakyolu', 7680, 24100),
+    ],
+    LeaderboardCategories.districtAziziye => const [
+      ('Ilıca', 12420, 38200),
+      ('Dadaşkent', 10980, 35100),
+      ('Aziziye Merkez', 9840, 32200),
+      ('Saltuklu', 8920, 28400),
+      ('Gezköy', 8160, 26100),
+      ('Selçuklu', 7420, 23900),
+      ('Aşkale Yolu', 6930, 21800),
+    ],
+    _ => const [
+      ('Ahmet K.', 3120, 10450),
+      ('Ayşe Y.', 2840, 9240),
+      ('Mehmet S.', 2450, 8610),
+      ('Fatma G.', 2100, 7820),
+      ('Caner D.', 1980, 7410),
+      ('Burak T.', 1850, 6900),
+      ('Zeynep E.', 1720, 6320),
+    ],
+  };
+
+  return [
+    for (var index = 0; index < rows.length; index++)
+      LeaderboardModel(
+        id: 'demo_${category}_${index + 1}',
+        category: category,
+        userId: 'demo_${category}_user_${index + 1}',
+        name: rows[index].$1,
+        weeklyPoints: rows[index].$2,
+        totalPoints: rows[index].$3,
+        rank: index + 1,
+      ),
+  ];
 }

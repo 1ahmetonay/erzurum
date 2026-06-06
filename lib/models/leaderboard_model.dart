@@ -5,8 +5,19 @@ class LeaderboardCategories {
   static const neighborhood = 'neighborhood';
   static const campus = 'campus';
   static const school = 'school';
+  static const districtYakutiye = 'district_yakutiye';
+  static const districtPalandoken = 'district_palandoken';
+  static const districtAziziye = 'district_aziziye';
 
-  static const values = [individual, neighborhood, campus, school];
+  static const values = [
+    individual,
+    neighborhood,
+    school,
+    campus,
+    districtYakutiye,
+    districtPalandoken,
+    districtAziziye,
+  ];
 }
 
 class LeaderboardModel {
