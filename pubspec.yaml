@@ -53,6 +53,8 @@ dependencies:
   uuid: ^4.4.2
   permission_handler: ^11.3.1
   cupertino_icons: ^1.0.8
+  flutter_map: ^8.3.0
+  latlong2: ^0.9.1
 
 dev_dependencies:
   flutter_test:
@@ -82,6 +84,8 @@ flutter:
 
   assets:
     - assets/login.png
+    - assets/kar.png
+    - assets/bitki.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -3,10 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/mock_data.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_text_styles.dart';
 import '../../models/recycling_point_model.dart';
 import '../../providers/recycling_point_provider.dart';
-import '../../shared/widgets/section_header.dart';
 import 'widgets/map_filter_bar.dart';
 import 'widgets/mock_map_view.dart';
 import 'widgets/point_detail_sheet.dart';
@@ -27,21 +25,30 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final pointsState = ref.watch(activeRecyclingPointsProvider);
     final sourcePoints = pointsState.valueOrNull ?? MockData.recyclingPoints;
     final points = _filteredPoints(sourcePoints);
-    final selectedPoint = points.contains(_selectedPoint)
+    final selectedPoint = points.any((point) => point.id == _selectedPoint?.id)
         ? _selectedPoint
-        : _firstOrNull(points);
+        : null;
 
     return Scaffold(
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-          children: [
-            const SectionHeader(
-              title: 'Harita',
-              subtitle: 'Yakındaki geri dönüşüm noktalarını keşfet.',
+      backgroundColor: AppColors.surface,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: MockMapView(
+              points: points,
+              selectedPoint: selectedPoint,
+              isLoading: pointsState.isLoading && !pointsState.hasValue,
+              hasError: pointsState.hasError,
+              onPointSelected: (point) {
+                setState(() => _selectedPoint = point);
+              },
             ),
-            const SizedBox(height: 16),
-            MapFilterBar(
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 14,
+            child: MapFilterBar(
               selectedType: _selectedType,
               onSelected: (type) {
                 setState(() {
@@ -50,40 +57,27 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 });
               },
             ),
-            const SizedBox(height: 16),
-            if (pointsState.isLoading && !pointsState.hasValue)
-              const _LoadingState()
-            else ...[
-              if (pointsState.hasError) ...[
-                const _ErrorState(
-                  message:
-                      'Geri dönüşüm noktaları yüklenemedi. Demo noktalarla devam edebilirsin.',
-                ),
-                const SizedBox(height: 12),
-              ],
-              if (points.isEmpty)
-                const _EmptyState(message: 'Bu filtrede aktif nokta yok.')
-              else
-                MockMapView(
-                  points: points,
-                  selectedPoint: selectedPoint,
-                  onPointSelected: (point) {
-                    setState(() => _selectedPoint = point);
-                  },
-                ),
-            ],
-            const SizedBox(height: 16),
-            if (selectedPoint != null) PointDetailSheet(point: selectedPoint),
-            const SizedBox(height: 12),
-            Text(
-              'Harita görünümü demo modunda. Yol tarifi butonu harita uygulamasında açılır.',
-              textAlign: TextAlign.center,
-              style: AppTextStyles.caption.copyWith(
-                color: AppColors.textSecondary,
-              ),
+          ),
+          if (points.isEmpty && !pointsState.isLoading)
+            const Positioned.fill(
+              child: _MapMessage(message: 'Bu filtrede aktif nokta yok.'),
             ),
-          ],
-        ),
+          if (selectedPoint != null)
+            DraggableScrollableSheet(
+              initialChildSize: 0.49,
+              minChildSize: 0.32,
+              maxChildSize: 0.82,
+              snap: true,
+              snapSizes: const [0.49, 0.82],
+              builder: (context, scrollController) {
+                return PointDetailSheet(
+                  point: selectedPoint,
+                  scrollController: scrollController,
+                  onClose: () => setState(() => _selectedPoint = null),
+                );
+              },
+            ),
+        ],
       ),
     );
   }
@@ -92,60 +86,42 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     if (_selectedType == 'all') return points;
     return points.where((point) => point.type == _selectedType).toList();
   }
-
-  RecyclingPointModel? _firstOrNull(List<RecyclingPointModel> points) {
-    return points.isEmpty ? null : points.first;
-  }
 }
 
-class _LoadingState extends StatelessWidget {
-  const _LoadingState();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 48),
-      child: Center(child: CircularProgressIndicator()),
-    );
-  }
-}
-
-class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.message});
+class _MapMessage extends StatelessWidget {
+  const _MapMessage({required this.message});
 
   final String message;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.winterLight,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.winterIce),
+    return IgnorePointer(
+      child: Center(
+        child: Container(
+          margin: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainerLowest.withValues(alpha: 0.92),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.outlineVariant),
+            boxShadow: const [
+              BoxShadow(
+                color: AppColors.shadow,
+                blurRadius: 18,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
       ),
-      child: Text(
-        message,
-        style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.cardBg,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Text(message, style: AppTextStyles.body),
     );
   }
 }
