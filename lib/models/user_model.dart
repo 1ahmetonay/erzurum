@@ -15,6 +15,7 @@ class UserModel {
     this.preferences = const UserPreferencesModel(),
     this.photoUrl,
     this.schoolOrCampus,
+    this.role = 'user',
   });
 
   final String uid;
@@ -25,6 +26,7 @@ class UserModel {
   final int weeklyPoints;
   final String neighborhood;
   final String? schoolOrCampus;
+  final String role;
   final List<String> badges;
   final int level;
   final DateTime createdAt;
@@ -41,6 +43,7 @@ class UserModel {
       weeklyPoints: map['weeklyPoints'] as int? ?? 0,
       neighborhood: map['neighborhood'] as String? ?? '',
       schoolOrCampus: map['schoolOrCampus'] as String?,
+      role: map['role'] as String? ?? 'user',
       badges: List<String>.from(map['badges'] as List? ?? const []),
       level: map['level'] as int? ?? 1,
       createdAt: _dateTimeFromValue(map['createdAt']),
@@ -61,6 +64,7 @@ class UserModel {
       'weeklyPoints': weeklyPoints,
       'neighborhood': neighborhood,
       'schoolOrCampus': schoolOrCampus,
+      'role': role,
       'badges': badges,
       'level': level,
       'createdAt': createdAt,
@@ -78,6 +82,7 @@ class UserModel {
     int? weeklyPoints,
     String? neighborhood,
     String? schoolOrCampus,
+    String? role,
     List<String>? badges,
     int? level,
     DateTime? createdAt,
@@ -93,6 +98,7 @@ class UserModel {
       weeklyPoints: weeklyPoints ?? this.weeklyPoints,
       neighborhood: neighborhood ?? this.neighborhood,
       schoolOrCampus: schoolOrCampus ?? this.schoolOrCampus,
+      role: role ?? this.role,
       badges: badges ?? this.badges,
       level: level ?? this.level,
       createdAt: createdAt ?? this.createdAt,

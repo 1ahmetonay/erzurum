@@ -11,6 +11,7 @@ AtıkAvı Erzurum, Erzurum'da geri dönüşüm davranışını QR tarama, görev
 - Geri dönüşüm noktası filtreleri, QR gösterimi, yol tarifi ve bozuk nokta bildirimi
 - Ödül kullanımı, stok düşümü, puan düşümü ve kupon kodu oluşturma
 - Debug modda kontrollü Firestore demo seed ekranı
+- Arkadaş isteği, temizlik grubu oluşturma ve grup daveti MVP akışı
 
 ## Teknik Stack
 
@@ -19,6 +20,19 @@ AtıkAvı Erzurum, Erzurum'da geri dönüşüm davranışını QR tarama, görev
 - Riverpod, GoRouter
 - mobile_scanner, image_picker, qr_flutter, url_launcher
 - Flutter test, analyzer ve Firebase security rules
+
+## Kirli Bölge Fotoğrafı, Konum ve AI Analiz Hazırlığı
+
+Kirli bölge bildiriminde fotoğraf zorunludur. Kullanıcı mevcut konumunu
+kullanabilir veya doğrulanan enlem/boylam değerlerini manuel girebilir. Konum
+seçilmezse Erzurum merkez koordinatları kullanılır.
+
+Fotoğraflar Firebase Storage'da
+`dirty_area_photos/{userId}/{timestamp}.jpg` yoluna yüklenir ve indirme URL'si
+`dirty_areas.photoUrl` alanına yazılır. AI analiz alanları ve normalize sonuç
+modeli ileride Gemini entegrasyonu için hazırdır; gerçek Gemini API bağlantısı
+henüz yapılmamıştır. API anahtarları repoya eklenmemeli, production analizleri
+Cloud Functions veya güvenli bir backend üzerinden çalıştırılmalıdır.
 
 ## Kurulum
 
@@ -33,6 +47,8 @@ Firebase projesi bu repo için `atikavi-erzurum` olarak yapılandırılmıştır
 
 Google Auth sağlayıcısını Firebase Console'da etkinleştir. Firestore ve Storage kurallarını deploy etmeden önce Firebase CLI ile giriş yap:
 
+Flutter web'de Google Sign-In çalışması için [web/index.html](/Users/ahmetonay/projects/atikavi_erzurum/web/index.html) içindeki `google-signin-client_id` meta tag'i gerçek Web OAuth Client ID ile değiştirilmelidir. Bu ID Firebase Console veya Google Cloud Console içindeki OAuth 2.0 Credentials bölümünden alınır. Android client id değil, Web client id kullanılmalıdır.
+
 ```bash
 firebase login --reauth
 firebase use atikavi-erzurum
@@ -40,6 +56,44 @@ firebase deploy --only firestore:rules,storage
 ```
 
 Güvenlik kapsamı ve production notları için [docs/FIREBASE_SECURITY_NOTES.md](/Users/ahmetonay/projects/atikavi_erzurum/docs/FIREBASE_SECURITY_NOTES.md) dosyasına bak.
+
+## Firebase Functions ve Admin Kurulumu
+
+Admin onay, temizlik kanıtı red/onay ve custom claim yönetimi için callable Functions iskeleti `functions/` altında bulunur.
+
+```bash
+cd functions
+npm install
+npm run build
+npm run serve
+npm run deploy
+```
+
+Flutter tarafında Functions dependency değişikliklerinden sonra:
+
+```bash
+flutter pub get
+```
+
+Node 20 önerilir. Yerel Node v24 kullanılırsa `npm install` sırasında engine uyarısı görülebilir; bunun nedeni Functions runtime hedefinin Node 20 olmasıdır.
+
+Emulator test adımları için [docs/FUNCTIONS_EMULATOR_TEST_GUIDE.md](/Users/ahmetonay/projects/atikavi_erzurum/docs/FUNCTIONS_EMULATOR_TEST_GUIDE.md), ilk admin kurulumu için [docs/FIRST_ADMIN_SETUP.md](/Users/ahmetonay/projects/atikavi_erzurum/docs/FIRST_ADMIN_SETUP.md) dosyasını kullan.
+
+İlk admin kullanıcısının `admin` custom claim'i uygulama dışından Firebase Admin SDK veya güvenli bir CLI script ile atanmalıdır.
+
+## Arkadaş ve Grup Daveti MVP
+
+Sosyal temizlik akışı şu Firestore koleksiyonlarını kullanır: `user_connections`, `cleanup_groups`, `group_invitations`. Arkadaş arama MVP'de `users` koleksiyonundan sınırlı client-side filtreleme yapar; production için indeksli arama veya ayrı bir arama servisi önerilir.
+
+Grup oluşturma, üyelik ve davet kabulü client transaction ile `cleanup_events` katılımcı listesini senkronize eder. Production'da bu çapraz doküman güncellemeleri Cloud Functions + Admin SDK tarafına taşınmalıdır.
+
+## Demo Sosyal Veriler
+
+Arkadaşlarım, Arkadaşlık İstekleri, Grup Davetleri ve Temizlik Grupları
+ekranları Firestore kaydı bulunmadığında yerel tanıtım verilerini otomatik gösterir.
+Bu kayıtlar Firestore'a yazılmaz ve yazma gerektiren aksiyonları kapalıdır.
+Gerçek sosyal kayıtlar geldiğinde provider'lar onları öncelikli gösterir. Yerel sahte
+veriler production sosyal akışı tamamlandığında kaldırılmalıdır.
 
 ## Stitch MCP Tasarım Notu
 

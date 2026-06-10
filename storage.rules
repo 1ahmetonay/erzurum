@@ -21,6 +21,28 @@ service firebase.storage {
       allow delete: if false;
     }
 
+    match /cleanup_proofs/{cleanupEventId}/{fileName} {
+      allow read: if signedIn();
+
+      allow write: if signedIn()
+        && request.resource != null
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+
+      allow delete: if false;
+    }
+
+    match /dirty_area_photos/{userId}/{fileName} {
+      allow read: if signedIn();
+
+      allow write: if isOwner(userId)
+        && request.resource != null
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+
+      allow delete: if false;
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }

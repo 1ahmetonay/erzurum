@@ -3,8 +3,8 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 
+import '../../core/constants/demo_scan_data.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../models/scan_result_model.dart';
@@ -25,8 +25,8 @@ class ScanScreen extends ConsumerStatefulWidget {
 class _ScanScreenState extends ConsumerState<ScanScreen> {
   var _selectedWasteType = WasteTypes.plastic;
   _ScanMode? _activeMode;
-  XFile? _selectedPhoto;
   String? _shownResultKey;
+  var _isBarcodeDemoLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -82,17 +82,33 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                 onQrDetected: _handleBarcodeDetected,
               )
             else
-              const _PhotoInstructionCard(),
+              QrScannerView(
+                key: const ValueKey('photo-preview'),
+                isProcessing: scanState.isLoading,
+                mode: ScanCameraMode.photo,
+                onQrDetected: (_) {},
+              ),
             if (_activeMode == _ScanMode.qr && kDebugMode) ...[
               const SizedBox(height: 12),
-              _DemoQrButtons(
+              _DemoActionCard(
+                icon: Icons.qr_code_2,
+                title: 'Demo QR',
+                message: DemoScanData.qrCode,
+                buttonLabel: 'Demo QR Simüle Et',
                 isLoading: scanState.isLoading,
-                onSubmit: _submitQrCode,
+                onPressed: _submitDemoQrCode,
               ),
             ],
-            if (_activeMode == _ScanMode.barcode) ...[
+            if (_activeMode == _ScanMode.barcode && kDebugMode) ...[
               const SizedBox(height: 12),
-              const _BarcodeDemoCard(),
+              _DemoActionCard(
+                icon: Icons.barcode_reader,
+                title: 'Demo Barkod',
+                message: DemoScanData.barcode,
+                buttonLabel: 'Demo Barkod Simüle Et',
+                isLoading: _isBarcodeDemoLoading,
+                onPressed: _submitDemoBarcode,
+              ),
             ],
             const SizedBox(height: 18),
             Text('Atık Türü', style: AppTextStyles.subtitle),
@@ -140,12 +156,9 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
             ),
             const SizedBox(height: 18),
             if (_activeMode == _ScanMode.photo)
-              _UploadCard(
-                selectedPhoto: _selectedPhoto,
+              _PhotoActionCard(
                 isLoading: scanState.isLoading,
-                onPickCamera: () => _pickPhoto(ImageSource.camera),
-                onPickGallery: () => _pickPhoto(ImageSource.gallery),
-                onSubmit: _submitPhotoWaste,
+                onSubmitDemo: kDebugMode ? _submitDemoPhotoWaste : null,
               )
             else
               _ModeHintCard(activeMode: _activeMode),
@@ -161,9 +174,6 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
 
   void _selectMode(_ScanMode mode) {
     setState(() => _activeMode = mode);
-    if (mode == _ScanMode.photo) {
-      _pickPhoto(ImageSource.camera);
-    }
   }
 
   void _selectWasteType(String wasteType) {
@@ -181,39 +191,35 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     }
   }
 
-  void _handleBarcodeDetected(String barcode) {
-    setState(() => _activeMode = null);
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Barkod okundu: $barcode')));
+  Future<void> _submitDemoQrCode() async {
+    await _submitQrCode(DemoScanData.qrCode);
   }
 
-  Future<void> _pickPhoto(ImageSource source) async {
+  Future<void> _handleBarcodeDetected(String barcode) async {
+    await _showBarcodeResult(barcode);
+  }
+
+  Future<void> _submitDemoBarcode() async {
+    if (_isBarcodeDemoLoading) return;
+    setState(() => _isBarcodeDemoLoading = true);
     try {
-      final photo = await ImagePicker().pickImage(
-        source: source,
-        imageQuality: 82,
-        maxWidth: 1600,
-      );
-      if (photo == null) return;
-      setState(() => _selectedPhoto = photo);
+      await Future<void>.delayed(const Duration(milliseconds: 450));
+      await _showBarcodeResult(DemoScanData.barcode);
     } on Object catch (error) {
-      _showError('Fotoğraf seçilemedi: $error');
+      _showError(error);
+    } finally {
+      if (mounted) setState(() => _isBarcodeDemoLoading = false);
     }
   }
 
-  Future<void> _submitPhotoWaste() async {
+  Future<void> _submitDemoPhotoWaste() async {
     try {
       await ref
           .read(scanControllerProvider.notifier)
-          .submitPhotoWaste(
-            wasteType: _selectedWasteType,
-            photo: _selectedPhoto,
-          );
-      setState(() {
-        _selectedPhoto = null;
-        _activeMode = null;
-      });
+          .submitDemoPhotoWaste(wasteType: _selectedWasteType);
+      if (mounted) {
+        setState(() => _activeMode = null);
+      }
     } on Object catch (error) {
       _showError(error);
     }
@@ -223,7 +229,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     final points = result.totalPointsEarned;
     final message = result.isPhotoPending
         ? result.message
-        : '+$points Dadaş Puan kazandınız.';
+        : 'QR doğrulandı. Puanınız eklendi. +$points Dadaş Puan kazandınız.';
 
     return showDialog<void>(
       context: context,
@@ -249,9 +255,143 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
 
   void _showError(Object error) {
     if (!mounted) return;
+    final message = error.toString();
+    if (message.contains('kısa süre önce puan kazandın')) {
+      _showCenteredWarning(title: 'Biraz Bekle', message: message);
+      return;
+    }
+
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text(error.toString())));
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _showCenteredWarning({
+    required String title,
+    required String message,
+  }) {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 32),
+            child: _ScanWarningOverlay(
+              title: title,
+              message: message,
+              onDismiss: () => Navigator.of(context).pop(),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showBarcodeResult(String barcode) {
+    if (!mounted) return Future.value();
+    setState(() => _activeMode = null);
+
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 32),
+            child: SuccessOverlay(
+              title: 'Barkod Okundu',
+              message:
+                  'Barkod: $barcode\nÜrün geri dönüşüm kategorisi: Plastik / Ambalaj.',
+              bonusPoints: 0,
+              completedTaskTitles: const [],
+              onDismiss: () => Navigator.of(context).pop(),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ScanWarningOverlay extends StatelessWidget {
+  const _ScanWarningOverlay({
+    required this.title,
+    required this.message,
+    required this.onDismiss,
+  });
+
+  final String title;
+  final String message;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(maxWidth: 420),
+      padding: const EdgeInsets.fromLTRB(28, 30, 28, 24),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x33000000),
+            blurRadius: 28,
+            offset: Offset(0, 14),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 88,
+            height: 88,
+            decoration: BoxDecoration(
+              color: AppColors.warning.withValues(alpha: 0.18),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.hourglass_top,
+              color: AppColors.warning,
+              size: 42,
+            ),
+          ),
+          const SizedBox(height: 22),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.display.copyWith(
+              color: AppColors.primary,
+              fontSize: 30,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.subtitle.copyWith(
+              color: AppColors.textSecondary,
+              fontSize: 17,
+            ),
+          ),
+          const SizedBox(height: 26),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: onDismiss,
+              child: const Text('Tamam'),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -363,19 +503,6 @@ class _ScannerIdleCard extends StatelessWidget {
   }
 }
 
-class _PhotoInstructionCard extends StatelessWidget {
-  const _PhotoInstructionCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return const _InstructionCard(
-      icon: Icons.photo_camera_outlined,
-      title: 'Fotoğraf modu',
-      message: 'Atığın fotoğrafını çekmek için kamerayı hizala',
-    );
-  }
-}
-
 class _ModeHintCard extends StatelessWidget {
   const _ModeHintCard({required this.activeMode});
 
@@ -443,20 +570,11 @@ class _InstructionCard extends StatelessWidget {
   }
 }
 
-class _UploadCard extends StatelessWidget {
-  const _UploadCard({
-    required this.selectedPhoto,
-    required this.isLoading,
-    required this.onPickCamera,
-    required this.onPickGallery,
-    required this.onSubmit,
-  });
+class _PhotoActionCard extends StatelessWidget {
+  const _PhotoActionCard({required this.isLoading, this.onSubmitDemo});
 
-  final XFile? selectedPhoto;
   final bool isLoading;
-  final VoidCallback onPickCamera;
-  final VoidCallback onPickGallery;
-  final VoidCallback onSubmit;
+  final VoidCallback? onSubmitDemo;
 
   @override
   Widget build(BuildContext context) {
@@ -471,13 +589,11 @@ class _UploadCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.cloud_upload_outlined, color: AppColors.primary),
+              const Icon(Icons.photo_camera_outlined, color: AppColors.primary),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  selectedPhoto == null
-                      ? 'Fotoğraf yükle ve inceleme kaydı oluştur'
-                      : 'Seçilen fotoğraf: ${selectedPhoto!.name}',
+                  'Atığı kadraja yerleştir ve demo fotoğraf bildirimi oluştur.',
                   style: AppTextStyles.body,
                 ),
               ),
@@ -488,21 +604,12 @@ class _UploadCard extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              OutlinedButton.icon(
-                onPressed: isLoading ? null : onPickCamera,
-                icon: const Icon(Icons.photo_camera_outlined),
-                label: const Text('Kamera'),
-              ),
-              OutlinedButton.icon(
-                onPressed: isLoading ? null : onPickGallery,
-                icon: const Icon(Icons.photo_library_outlined),
-                label: const Text('Galeri'),
-              ),
-              FilledButton.icon(
-                onPressed: isLoading || selectedPhoto == null ? null : onSubmit,
-                icon: const Icon(Icons.check),
-                label: const Text('Kaydet'),
-              ),
+              if (onSubmitDemo != null)
+                FilledButton.icon(
+                  onPressed: isLoading ? null : onSubmitDemo,
+                  icon: const Icon(Icons.science_outlined),
+                  label: const Text('Fotoğrafı Simüle Et'),
+                ),
             ],
           ),
         ],
@@ -511,56 +618,60 @@ class _UploadCard extends StatelessWidget {
   }
 }
 
-class _DemoQrButtons extends StatelessWidget {
-  const _DemoQrButtons({required this.isLoading, required this.onSubmit});
+class _DemoActionCard extends StatelessWidget {
+  const _DemoActionCard({
+    required this.icon,
+    required this.title,
+    required this.message,
+    required this.buttonLabel,
+    required this.isLoading,
+    required this.onPressed,
+  });
 
+  final IconData icon;
+  final String title;
+  final String message;
+  final String buttonLabel;
   final bool isLoading;
-  final ValueChanged<String> onSubmit;
-
-  static const _items = [
-    ('Yakutiye QR Simüle Et', 'ATIKAVI_POINT_YAKUTIYE'),
-    ('Sıfır Atık Kafe QR Simüle Et', 'ATIKAVI_POINT_ZERO_WASTE_CAFE'),
-    ('Atatürk Üniversitesi QR Simüle Et', 'ATIKAVI_POINT_ATAUNI'),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final item in _items)
-          OutlinedButton.icon(
-            onPressed: isLoading ? null : () => onSubmit(item.$2),
-            icon: const Icon(Icons.qr_code_2),
-            label: Text(item.$1),
-          ),
-      ],
-    );
-  }
-}
-
-class _BarcodeDemoCard extends StatelessWidget {
-  const _BarcodeDemoCard();
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: AppColors.outlineVariant),
       ),
       child: Row(
         children: [
-          const Icon(Icons.barcode_reader, color: AppColors.primary),
+          Icon(icon, color: AppColors.primary),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              'Demo barkod: PET şişe • 10 Dadaş Puan',
-              style: AppTextStyles.body,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: AppTextStyles.subtitle),
+                const SizedBox(height: 4),
+                Text(
+                  message,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
             ),
+          ),
+          const SizedBox(width: 12),
+          OutlinedButton(
+            onPressed: isLoading ? null : onPressed,
+            child: isLoading
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(buttonLabel),
           ),
         ],
       ),

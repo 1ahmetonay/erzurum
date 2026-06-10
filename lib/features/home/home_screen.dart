@@ -60,6 +60,15 @@ class HomeScreen extends ConsumerWidget {
               onTap: () => context.go('/map'),
             ),
             const SizedBox(height: 26),
+            _DirtyAreaShortcutCard(
+              onTap: () => context.go('/report-dirty-area'),
+            ),
+            const SizedBox(height: 14),
+            _SocialShortcutRow(
+              onFriendsTap: () => context.go('/friends'),
+              onInvitationsTap: () => context.go('/group-invitations'),
+            ),
+            const SizedBox(height: 26),
             const WeeklyChart(),
             const SizedBox(height: 28),
             _HomeSectionTitle(
@@ -90,6 +99,167 @@ class HomeScreen extends ConsumerWidget {
       (point) =>
           point.id.contains('yakutiye') || point.name.contains('Yakutiye'),
       orElse: () => source.first,
+    );
+  }
+}
+
+class _SocialShortcutRow extends StatelessWidget {
+  const _SocialShortcutRow({
+    required this.onFriendsTap,
+    required this.onInvitationsTap,
+  });
+
+  final VoidCallback onFriendsTap;
+  final VoidCallback onInvitationsTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cards = [
+          _SocialShortcutCard(
+            icon: Icons.people_outline,
+            title: 'Arkadaşlarım',
+            subtitle: 'Arkadaş ekle ve ekip kur.',
+            onTap: onFriendsTap,
+          ),
+          _SocialShortcutCard(
+            icon: Icons.mark_email_unread_outlined,
+            title: 'Grup Davetleri',
+            subtitle: 'Bekleyen ekip çağrılarını gör.',
+            onTap: onInvitationsTap,
+          ),
+        ];
+
+        if (constraints.maxWidth < 360) {
+          return Column(
+            children: [cards[0], const SizedBox(height: 10), cards[1]],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(child: cards[0]),
+            const SizedBox(width: 10),
+            Expanded(child: cards[1]),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _SocialShortcutCard extends StatelessWidget {
+  const _SocialShortcutCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surfaceContainerLowest,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 118),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.outlineVariant),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: AppColors.primary),
+              const SizedBox(height: 10),
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.subtitle.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.caption.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DirtyAreaShortcutCard extends StatelessWidget {
+  const _DirtyAreaShortcutCard({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.outlineVariant),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: const BoxDecoration(
+              color: AppColors.secondaryContainer,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.add_location_alt_outlined,
+              color: AppColors.primaryDark,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Kirli Bölge Bildir',
+                  style: AppTextStyles.subtitle.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Atık yoğunluğu olan alanları bildir, topluluk temizliği başlat.',
+                  style: AppTextStyles.body.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          FilledButton(onPressed: onTap, child: const Text('Bildir')),
+        ],
+      ),
     );
   }
 }

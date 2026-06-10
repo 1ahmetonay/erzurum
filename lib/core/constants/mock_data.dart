@@ -90,7 +90,7 @@ class MockData {
     RewardModel(
       id: 'cafe_discount_001',
       title: 'Sıfır Atık Kafe %10 İndirim',
-      description: 'Anlaşmalı kafelerde kahve ve atıştırmalık indirimi.',
+      description: 'Merkez Şubesi’nde geçerlidir.',
       requiredPoints: 250,
       category: RewardCategories.discount,
       sponsor: 'Sıfır Atık Kafe',
@@ -101,8 +101,8 @@ class MockData {
     RewardModel(
       id: 'transport_001',
       title: 'Erzurum Kart Bakiye',
-      description: 'Toplu taşıma için dijital bakiye kuponu.',
-      requiredPoints: 700,
+      description: '10 TL Ulaşım Bakiyesi',
+      requiredPoints: 500,
       category: RewardCategories.transport,
       sponsor: 'Erzurum Kart',
       iconEmoji: '🚌',
@@ -112,8 +112,8 @@ class MockData {
     RewardModel(
       id: 'tree_donation_001',
       title: 'Fidan Bağışı',
-      description: 'Erzurum için senin adına bir fidan bağışı.',
-      requiredPoints: 900,
+      description: 'Adınıza 1 Fidan Dikimi',
+      requiredPoints: 1000,
       category: RewardCategories.donation,
       sponsor: 'AtıkAvı Erzurum',
       iconEmoji: '🌲',

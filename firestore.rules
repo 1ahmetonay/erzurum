@@ -10,6 +10,10 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == userId;
     }
 
+    function isAdmin() {
+      return signedIn() && request.auth.token.admin == true;
+    }
+
     function isValidString(value, maxLength) {
       return value is string && value.size() <= maxLength;
     }
@@ -21,6 +25,25 @@ service cloud.firestore {
     function userPointsAreValid() {
       return isNonNegativeNumber(request.resource.data.totalPoints)
         && isNonNegativeNumber(request.resource.data.weeklyPoints);
+    }
+
+    function validAdminCleanupPointAward() {
+      return isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'totalPoints',
+          'weeklyPoints',
+          'updatedAt'
+        ])
+        && resource.data.totalPoints is int
+        && resource.data.weeklyPoints is int
+        && request.resource.data.totalPoints is int
+        && request.resource.data.weeklyPoints is int
+        && request.resource.data.totalPoints > resource.data.totalPoints
+        && request.resource.data.weeklyPoints > resource.data.weeklyPoints
+        && request.resource.data.totalPoints - resource.data.totalPoints
+          == request.resource.data.weeklyPoints - resource.data.weeklyPoints
+        && request.resource.data.totalPoints - resource.data.totalPoints >= 10
+        && request.resource.data.totalPoints - resource.data.totalPoints <= 200;
     }
 
     function validWasteVerificationMethod() {
@@ -41,6 +64,316 @@ service cloud.firestore {
       ];
     }
 
+    function validDirtyAreaStatus() {
+      return request.resource.data.status in [
+        'reported',
+        'planned',
+        'inProgress',
+        'cleaned',
+        'rejected'
+      ];
+    }
+
+    function validDirtyAreaWasteTypes() {
+      return request.resource.data.wasteTypes is list
+        && request.resource.data.wasteTypes.size() > 0
+        && request.resource.data.wasteTypes.hasOnly([
+          'plastic',
+          'glass',
+          'paper',
+          'metal',
+          'organic',
+          'mixed'
+        ]);
+    }
+
+    function validPhotoAnalysisStatus() {
+      return request.resource.data.get('photoAnalysisStatus', 'notStarted') in [
+        'notStarted',
+        'pending',
+        'approved',
+        'rejected',
+        'needsReview',
+        'failed'
+      ];
+    }
+
+    function dirtyAreaAnalysisIsValid() {
+      return validPhotoAnalysisStatus()
+        && (
+          request.resource.data.get('aiCleanlinessScore', null) == null
+          || (
+            request.resource.data.get('aiCleanlinessScore', null) is int
+            && request.resource.data.get('aiCleanlinessScore', null) >= 0
+            && request.resource.data.get('aiCleanlinessScore', null) <= 100
+          )
+        )
+        && (
+          request.resource.data.get('aiWasteMatchScore', null) == null
+          || (
+            request.resource.data.get('aiWasteMatchScore', null) is int
+            && request.resource.data.get('aiWasteMatchScore', null) >= 0
+            && request.resource.data.get('aiWasteMatchScore', null) <= 100
+          )
+        )
+        && request.resource.data.get('aiDetectedWasteTypes', []) is list
+        && request.resource.data.get('aiDetectedWasteTypes', []).size() <= 20
+        && (
+          request.resource.data.get('aiAnalysisSummary', null) == null
+          || isValidString(
+            request.resource.data.get('aiAnalysisSummary', null),
+            1000
+          )
+        )
+        && (
+          request.resource.data.get('aiAnalysisProvider', null) == null
+          || isValidString(
+            request.resource.data.get('aiAnalysisProvider', null),
+            64
+          )
+        );
+    }
+
+    function dirtyAreaContentIsValid() {
+      return request.resource.data.keys().hasOnly([
+          'id',
+          'title',
+          'description',
+          'reportedByUserId',
+          'reportedByUsername',
+          'latitude',
+          'longitude',
+          'addressText',
+          'photoUrl',
+          'photoAnalysisStatus',
+          'aiCleanlinessScore',
+          'aiWasteMatchScore',
+          'aiDetectedWasteTypes',
+          'aiAnalysisSummary',
+          'aiAnalysisProvider',
+          'aiAnalyzedAt',
+          'wasteTypes',
+          'severityLevel',
+          'status',
+          'participantCount',
+          'createdAt',
+          'updatedAt'
+        ])
+        && isValidString(request.resource.data.title, 120)
+        && isValidString(request.resource.data.description, 1000)
+        && isValidString(request.resource.data.addressText, 300)
+        && isValidString(request.resource.data.reportedByUsername, 120)
+        && (
+          request.resource.data.photoUrl == null
+          || isValidString(request.resource.data.photoUrl, 2048)
+        )
+        && (request.resource.data.latitude is int || request.resource.data.latitude is float)
+        && (request.resource.data.longitude is int || request.resource.data.longitude is float)
+        && request.resource.data.severityLevel is int
+        && request.resource.data.severityLevel >= 1
+        && request.resource.data.severityLevel <= 5
+        && isNonNegativeNumber(request.resource.data.participantCount)
+        && validDirtyAreaWasteTypes()
+        && validDirtyAreaStatus()
+        && dirtyAreaAnalysisIsValid();
+    }
+
+    function validCleanupEventStatus() {
+      return request.resource.data.status in [
+        'planned',
+        'inProgress',
+        'pendingApproval',
+        'completed',
+        'cancelled'
+      ];
+    }
+
+    function validCleanupApprovalStatus() {
+      return request.resource.data.approvalStatus in [
+        'none',
+        'pending',
+        'approved',
+        'rejected'
+      ];
+    }
+
+    function cleanupEventContentIsValid() {
+      return request.resource.data.keys().hasOnly([
+          'id',
+          'dirtyAreaId',
+          'title',
+          'description',
+          'createdByUserId',
+          'createdByUsername',
+          'meetingPointText',
+          'scheduledAt',
+          'status',
+          'maxParticipants',
+          'participantCount',
+          'participantIds',
+          'createdAt',
+          'updatedAt',
+          'completionPhotoUrl',
+          'completedAt',
+          'completedByUserId',
+          'pointsAwarded',
+          'pointsPerParticipant',
+          'approvalStatus',
+          'approvedByUserId',
+          'approvedAt',
+          'rejectedByUserId',
+          'rejectedAt',
+          'rejectionReason'
+        ])
+        && isValidString(request.resource.data.dirtyAreaId, 128)
+        && isValidString(request.resource.data.title, 120)
+        && isValidString(request.resource.data.description, 1000)
+        && isValidString(request.resource.data.createdByUsername, 120)
+        && isValidString(request.resource.data.meetingPointText, 300)
+        && request.resource.data.maxParticipants is int
+        && request.resource.data.maxParticipants >= 2
+        && request.resource.data.participantIds is list
+        && request.resource.data.participantCount is int
+        && request.resource.data.participantCount == request.resource.data.participantIds.size()
+        && request.resource.data.participantCount >= 0
+        && request.resource.data.participantCount <= request.resource.data.maxParticipants
+        && (
+          request.resource.data.completionPhotoUrl == null
+          || isValidString(request.resource.data.completionPhotoUrl, 2048)
+        )
+        && (
+          request.resource.data.completedByUserId == null
+          || isValidString(request.resource.data.completedByUserId, 128)
+        )
+        && request.resource.data.pointsAwarded is bool
+        && request.resource.data.pointsPerParticipant is int
+        && request.resource.data.pointsPerParticipant >= 0
+        && request.resource.data.pointsPerParticipant <= 200
+        && (
+          request.resource.data.approvedByUserId == null
+          || isValidString(request.resource.data.approvedByUserId, 128)
+        )
+        && (
+          request.resource.data.rejectedByUserId == null
+          || isValidString(request.resource.data.rejectedByUserId, 128)
+        )
+        && (
+          request.resource.data.rejectionReason == null
+          || isValidString(request.resource.data.rejectionReason, 1000)
+        )
+        && validCleanupApprovalStatus()
+        && validCleanupEventStatus();
+    }
+
+    function cleanupProofContentIsValid() {
+      return request.resource.data.keys().hasOnly([
+          'id',
+          'cleanupEventId',
+          'dirtyAreaId',
+          'uploadedByUserId',
+          'uploadedByUsername',
+          'photoUrl',
+          'note',
+          'createdAt',
+          'status',
+          'reviewedByUserId',
+          'reviewedAt',
+          'rejectionReason'
+        ])
+        && isValidString(request.resource.data.cleanupEventId, 128)
+        && isValidString(request.resource.data.dirtyAreaId, 128)
+        && request.resource.data.uploadedByUserId == request.auth.uid
+        && isValidString(request.resource.data.uploadedByUsername, 120)
+        && isValidString(request.resource.data.photoUrl, 2048)
+        && (
+          request.resource.data.note == null
+          || isValidString(request.resource.data.note, 1000)
+        )
+        && request.resource.data.status in ['pending', 'approved', 'rejected']
+        && (
+          request.resource.data.reviewedByUserId == null
+          || isValidString(request.resource.data.reviewedByUserId, 128)
+        )
+        && (
+          request.resource.data.rejectionReason == null
+          || isValidString(request.resource.data.rejectionReason, 1000)
+        );
+    }
+
+    function userConnectionContentIsValid() {
+      return request.resource.data.keys().hasOnly([
+          'id',
+          'requesterUserId',
+          'requesterUsername',
+          'receiverUserId',
+          'receiverUsername',
+          'status',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.status in ['pending', 'accepted', 'rejected', 'blocked']
+        && isValidString(request.resource.data.requesterUserId, 128)
+        && isValidString(request.resource.data.receiverUserId, 128)
+        && request.resource.data.requesterUserId != request.resource.data.receiverUserId
+        && isValidString(request.resource.data.requesterUsername, 120)
+        && isValidString(request.resource.data.receiverUsername, 120);
+    }
+
+    function cleanupGroupContentIsValid() {
+      return request.resource.data.keys().hasOnly([
+          'id',
+          'cleanupEventId',
+          'dirtyAreaId',
+          'name',
+          'description',
+          'createdByUserId',
+          'createdByUsername',
+          'memberIds',
+          'memberCount',
+          'maxMembers',
+          'status',
+          'createdAt',
+          'updatedAt'
+        ])
+        && isValidString(request.resource.data.cleanupEventId, 128)
+        && isValidString(request.resource.data.dirtyAreaId, 128)
+        && isValidString(request.resource.data.name, 80)
+        && isValidString(request.resource.data.description, 300)
+        && isValidString(request.resource.data.createdByUsername, 120)
+        && request.resource.data.memberIds is list
+        && request.resource.data.memberCount is int
+        && request.resource.data.maxMembers is int
+        && request.resource.data.maxMembers >= 2
+        && request.resource.data.maxMembers <= 20
+        && request.resource.data.memberCount == request.resource.data.memberIds.size()
+        && request.resource.data.memberCount >= 1
+        && request.resource.data.memberCount <= request.resource.data.maxMembers
+        && request.resource.data.status in ['active', 'full', 'completed', 'cancelled'];
+    }
+
+    function groupInvitationContentIsValid() {
+      return request.resource.data.keys().hasOnly([
+          'id',
+          'cleanupGroupId',
+          'cleanupEventId',
+          'dirtyAreaId',
+          'invitedByUserId',
+          'invitedByUsername',
+          'invitedUserId',
+          'invitedUsername',
+          'status',
+          'createdAt',
+          'updatedAt'
+        ])
+        && isValidString(request.resource.data.cleanupGroupId, 128)
+        && isValidString(request.resource.data.cleanupEventId, 128)
+        && isValidString(request.resource.data.dirtyAreaId, 128)
+        && isValidString(request.resource.data.invitedByUsername, 120)
+        && isValidString(request.resource.data.invitedUsername, 120)
+        && request.resource.data.invitedByUserId != request.resource.data.invitedUserId
+        && request.resource.data.status in ['pending', 'accepted', 'rejected', 'cancelled'];
+    }
+
     // MVP note: some point operations currently run in client transactions
     // so QR bonuses, task bonuses, and reward spending can update user points.
     // In production, validate these mutations with Cloud Functions + Admin SDK.
@@ -49,12 +382,18 @@ service cloud.firestore {
 
       allow create: if isOwner(userId)
         && request.resource.data.uid == userId
+        && request.resource.data.role == 'user'
         && isValidString(request.resource.data.email, 256)
         && userPointsAreValid();
 
       allow update: if isOwner(userId)
         && request.resource.data.uid == resource.data.uid
+        && request.resource.data.role == resource.data.role
         && userPointsAreValid();
+
+      // Temporary admin-claim client compatibility for cleanup point awards.
+      // Production should use callable Cloud Functions/Admin SDK only.
+      allow update: if validAdminCleanupPointAward();
 
       allow delete: if false;
 
@@ -138,6 +477,349 @@ service cloud.firestore {
         && request.resource.data.status == 'pending';
 
       allow update, delete: if false;
+    }
+
+    // Status and participant workflow should move to Admin SDK or
+    // Cloud Functions before the community cleanup flow is completed.
+    match /dirty_areas/{areaId} {
+      allow read: if signedIn();
+
+      allow create: if signedIn()
+        && request.resource.data.id == areaId
+        && request.resource.data.reportedByUserId == request.auth.uid
+        && request.resource.data.status == 'reported'
+        && request.resource.data.participantCount == 0
+        && request.resource.data.photoAnalysisStatus == 'pending'
+        && request.resource.data.aiCleanlinessScore == null
+        && request.resource.data.aiWasteMatchScore == null
+        && request.resource.data.aiDetectedWasteTypes.size() == 0
+        && request.resource.data.aiAnalysisProvider == null
+        && request.resource.data.aiAnalyzedAt == null
+        && dirtyAreaContentIsValid();
+
+      allow update: if isOwner(resource.data.reportedByUserId)
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.reportedByUserId == resource.data.reportedByUserId
+        && request.resource.data.status == resource.data.status
+        && request.resource.data.participantCount == resource.data.participantCount
+        && dirtyAreaContentIsValid()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'title',
+          'description',
+          'addressText',
+          'photoUrl',
+          'wasteTypes',
+          'severityLevel',
+          'updatedAt'
+        ]);
+
+      // Cleanup event creation and participation currently update these fields
+      // in client transactions. Production should move this coordination to
+      // Cloud Functions + Admin SDK.
+      allow update: if signedIn()
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.reportedByUserId == resource.data.reportedByUserId
+        && request.resource.data.status == 'planned'
+        && resource.data.status in ['reported', 'planned']
+        && isNonNegativeNumber(request.resource.data.participantCount)
+        && dirtyAreaContentIsValid()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status',
+          'participantCount',
+          'updatedAt'
+        ]);
+
+      allow update: if isAdmin()
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.reportedByUserId == resource.data.reportedByUserId
+        && request.resource.data.status == 'cleaned'
+        && resource.data.status in ['planned', 'inProgress']
+        && request.resource.data.participantCount == resource.data.participantCount
+        && dirtyAreaContentIsValid()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status',
+          'updatedAt'
+        ]);
+
+      // Production AI analysis writes should use Cloud Functions/Admin SDK.
+      allow update: if isAdmin()
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.reportedByUserId == resource.data.reportedByUserId
+        && request.resource.data.status == resource.data.status
+        && request.resource.data.participantCount == resource.data.participantCount
+        && dirtyAreaContentIsValid()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'photoAnalysisStatus',
+          'aiCleanlinessScore',
+          'aiWasteMatchScore',
+          'aiDetectedWasteTypes',
+          'aiAnalysisSummary',
+          'aiAnalysisProvider',
+          'aiAnalyzedAt',
+          'updatedAt'
+        ]);
+
+      allow delete: if false;
+    }
+
+    // Status transitions and final cleanup verification should move to Admin
+    // SDK or Cloud Functions before production launch.
+    match /cleanup_events/{eventId} {
+      allow read: if signedIn();
+
+      allow create: if signedIn()
+        && request.resource.data.id == eventId
+        && request.resource.data.createdByUserId == request.auth.uid
+        && request.resource.data.status == 'planned'
+        && request.resource.data.participantIds.hasOnly([request.auth.uid])
+        && request.resource.data.participantCount == 1
+        && request.resource.data.pointsAwarded == false
+        && request.resource.data.approvalStatus == 'none'
+        && cleanupEventContentIsValid();
+
+      allow update: if signedIn()
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.dirtyAreaId == resource.data.dirtyAreaId
+        && request.resource.data.createdByUserId == resource.data.createdByUserId
+        && request.resource.data.status == resource.data.status
+        && resource.data.status in ['planned', 'inProgress']
+        && cleanupEventContentIsValid()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'participantIds',
+          'participantCount',
+          'updatedAt'
+        ]);
+
+      allow update: if isOwner(resource.data.createdByUserId)
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.dirtyAreaId == resource.data.dirtyAreaId
+        && request.resource.data.createdByUserId == resource.data.createdByUserId
+        && request.resource.data.status == resource.data.status
+        && cleanupEventContentIsValid()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'title',
+          'description',
+          'meetingPointText',
+          'scheduledAt',
+          'maxParticipants',
+          'updatedAt'
+        ]);
+
+      allow update: if isOwner(resource.data.createdByUserId)
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.dirtyAreaId == resource.data.dirtyAreaId
+        && request.resource.data.createdByUserId == resource.data.createdByUserId
+        && request.resource.data.participantIds == resource.data.participantIds
+        && request.resource.data.participantCount == resource.data.participantCount
+        && resource.data.status in ['planned', 'inProgress']
+        && request.resource.data.status == 'pendingApproval'
+        && request.resource.data.approvalStatus == 'pending'
+        && resource.data.pointsAwarded == false
+        && request.resource.data.pointsAwarded == false
+        && request.resource.data.pointsPerParticipant >= 10
+        && request.resource.data.pointsPerParticipant <= 200
+        && isValidString(request.resource.data.completionPhotoUrl, 2048)
+        && request.resource.data.completedByUserId == request.auth.uid
+        && cleanupEventContentIsValid()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status',
+          'completionPhotoUrl',
+          'completedAt',
+          'completedByUserId',
+          'pointsAwarded',
+          'pointsPerParticipant',
+          'approvalStatus',
+          'approvedByUserId',
+          'approvedAt',
+          'rejectedByUserId',
+          'rejectedAt',
+          'rejectionReason',
+          'updatedAt'
+        ]);
+
+      allow update: if isAdmin()
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.dirtyAreaId == resource.data.dirtyAreaId
+        && request.resource.data.createdByUserId == resource.data.createdByUserId
+        && request.resource.data.participantIds == resource.data.participantIds
+        && request.resource.data.participantCount == resource.data.participantCount
+        && resource.data.status == 'pendingApproval'
+        && resource.data.approvalStatus == 'pending'
+        && resource.data.pointsAwarded == false
+        && request.resource.data.status == 'completed'
+        && request.resource.data.approvalStatus == 'approved'
+        && request.resource.data.pointsAwarded == true
+        && cleanupEventContentIsValid()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status',
+          'approvalStatus',
+          'approvedByUserId',
+          'approvedAt',
+          'pointsAwarded',
+          'updatedAt'
+        ]);
+
+      allow update: if isAdmin()
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.dirtyAreaId == resource.data.dirtyAreaId
+        && request.resource.data.createdByUserId == resource.data.createdByUserId
+        && request.resource.data.participantIds == resource.data.participantIds
+        && request.resource.data.participantCount == resource.data.participantCount
+        && resource.data.status == 'pendingApproval'
+        && resource.data.pointsAwarded == false
+        && request.resource.data.status == 'planned'
+        && request.resource.data.approvalStatus == 'rejected'
+        && cleanupEventContentIsValid()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status',
+          'approvalStatus',
+          'rejectedByUserId',
+          'rejectedAt',
+          'rejectionReason',
+          'updatedAt'
+        ]);
+
+      allow delete: if false;
+    }
+
+    match /cleanup_proofs/{proofId} {
+      allow read: if signedIn();
+
+      allow create: if signedIn()
+        && request.resource.data.id == proofId
+        && request.resource.data.status == 'pending'
+        && request.resource.data.reviewedByUserId == null
+        && cleanupProofContentIsValid();
+
+      allow update: if isAdmin()
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.cleanupEventId == resource.data.cleanupEventId
+        && request.resource.data.dirtyAreaId == resource.data.dirtyAreaId
+        && request.resource.data.uploadedByUserId == resource.data.uploadedByUserId
+        && request.resource.data.status in ['approved', 'rejected']
+        && request.resource.data.reviewedByUserId == request.auth.uid
+        && cleanupProofContentIsValid()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status',
+          'reviewedByUserId',
+          'reviewedAt',
+          'rejectionReason'
+        ]);
+
+      allow delete: if false;
+    }
+
+    match /user_connections/{connectionId} {
+      allow read: if signedIn()
+        && (
+          resource.data.requesterUserId == request.auth.uid
+          || resource.data.receiverUserId == request.auth.uid
+        );
+
+      allow create: if signedIn()
+        && request.resource.data.id == connectionId
+        && request.resource.data.requesterUserId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && userConnectionContentIsValid();
+
+      allow update: if signedIn()
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.requesterUserId == resource.data.requesterUserId
+        && request.resource.data.receiverUserId == resource.data.receiverUserId
+        && request.resource.data.requesterUsername == resource.data.requesterUsername
+        && request.resource.data.receiverUsername == resource.data.receiverUsername
+        && userConnectionContentIsValid()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status',
+          'updatedAt'
+        ])
+        && (
+          (
+            resource.data.status == 'pending'
+            && request.auth.uid == resource.data.receiverUserId
+            && request.resource.data.status in ['accepted', 'rejected']
+          )
+          || (
+            request.resource.data.status == 'blocked'
+            && (
+              request.auth.uid == resource.data.requesterUserId
+              || request.auth.uid == resource.data.receiverUserId
+            )
+          )
+        );
+
+      allow delete: if false;
+    }
+
+    // Friend/group coordination is still an MVP client transaction flow.
+    // Production should move group membership and invitation acceptance to
+    // Cloud Functions + Admin SDK to enforce stronger cross-document checks.
+    match /cleanup_groups/{groupId} {
+      allow read: if signedIn();
+
+      allow create: if signedIn()
+        && request.resource.data.id == groupId
+        && request.resource.data.createdByUserId == request.auth.uid
+        && request.resource.data.memberIds.hasOnly([request.auth.uid])
+        && cleanupGroupContentIsValid();
+
+      allow update: if signedIn()
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.cleanupEventId == resource.data.cleanupEventId
+        && request.resource.data.dirtyAreaId == resource.data.dirtyAreaId
+        && request.resource.data.createdByUserId == resource.data.createdByUserId
+        && request.resource.data.createdByUsername == resource.data.createdByUsername
+        && cleanupGroupContentIsValid()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'memberIds',
+          'memberCount',
+          'status',
+          'updatedAt'
+        ])
+        && (
+          request.auth.uid in resource.data.memberIds
+          || request.auth.uid in request.resource.data.memberIds
+        );
+
+      allow delete: if false;
+    }
+
+    match /group_invitations/{invitationId} {
+      allow read: if signedIn()
+        && (
+          resource.data.invitedByUserId == request.auth.uid
+          || resource.data.invitedUserId == request.auth.uid
+        );
+
+      allow create: if signedIn()
+        && request.resource.data.id == invitationId
+        && request.resource.data.invitedByUserId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && exists(/databases/$(database)/documents/cleanup_groups/$(request.resource.data.cleanupGroupId))
+        && request.auth.uid in get(
+          /databases/$(database)/documents/cleanup_groups/$(request.resource.data.cleanupGroupId)
+        ).data.memberIds
+        && groupInvitationContentIsValid();
+
+      allow update: if signedIn()
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.cleanupGroupId == resource.data.cleanupGroupId
+        && request.resource.data.cleanupEventId == resource.data.cleanupEventId
+        && request.resource.data.dirtyAreaId == resource.data.dirtyAreaId
+        && request.resource.data.invitedByUserId == resource.data.invitedByUserId
+        && request.resource.data.invitedByUsername == resource.data.invitedByUsername
+        && request.resource.data.invitedUserId == resource.data.invitedUserId
+        && request.resource.data.invitedUsername == resource.data.invitedUsername
+        && request.auth.uid == resource.data.invitedUserId
+        && resource.data.status == 'pending'
+        && request.resource.data.status in ['accepted', 'rejected']
+        && groupInvitationContentIsValid()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status',
+          'updatedAt'
+        ]);
+
+      allow delete: if false;
     }
 
     // Leaderboards are public to authenticated users, but writes should be

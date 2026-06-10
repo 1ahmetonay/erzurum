@@ -35,6 +35,7 @@ dependencies:
   firebase_auth: ^5.1.4
   cloud_firestore: ^5.2.1
   firebase_storage: ^12.1.3
+  cloud_functions: ^5.1.3
   google_sign_in: ^6.2.1
   google_maps_flutter: ^2.7.0
   geolocator: ^12.0.0
@@ -86,6 +87,9 @@ flutter:
     - assets/login.png
     - assets/kar.png
     - assets/bitki.png
+    - assets/cafe.png
+    - assets/otobus.png
+    - assets/fidan.png
     - assets/education/recycling_education.md
 
   # An image asset can refer to one or more resolution-specific "variants", see

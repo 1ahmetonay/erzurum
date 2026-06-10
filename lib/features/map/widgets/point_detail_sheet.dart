@@ -210,79 +210,139 @@ class PointDetailSheet extends StatelessWidget {
   }
 
   void _showQrDialog(BuildContext context, RecyclingPointModel point) {
-    final qrValue = point.qrCode.trim().isNotEmpty
-        ? point.qrCode.trim()
-        : point.id;
-    showDialog<void>(
+    final qrValue = _pointQrValue(point);
+
+    showModalBottomSheet<void>(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: AppColors.surfaceContainerLowest,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
+      useRootNavigator: true,
+      useSafeArea: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: AppColors.surfaceContainerLowest,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (sheetContext) => _PointQrSheet(
+        point: point,
+        qrValue: qrValue,
+        onCopy: () async {
+          await Clipboard.setData(ClipboardData(text: qrValue));
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('QR kod kopyalandı.')));
+        },
+        onClose: () => Navigator.of(sheetContext).pop(),
+      ),
+    );
+  }
+}
+
+class _PointQrSheet extends StatelessWidget {
+  const _PointQrSheet({
+    required this.point,
+    required this.qrValue,
+    required this.onCopy,
+    required this.onClose,
+  });
+
+  final RecyclingPointModel point;
+  final String qrValue;
+  final VoidCallback onCopy;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        22,
+        2,
+        22,
+        MediaQuery.paddingOf(context).bottom + 22,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'QR Kodu',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.title.copyWith(fontWeight: FontWeight.w900),
           ),
-          title: const Text('QR Kodu', style: AppTextStyles.title),
-          content: SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 320),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    point.name,
-                    textAlign: TextAlign.center,
-                    style: AppTextStyles.subtitle,
-                  ),
-                  const SizedBox(height: 16),
-                  Center(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceContainerLowest,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: AppColors.outlineVariant),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: QrImageView(
-                          data: qrValue,
-                          version: QrVersions.auto,
-                          size: 180,
-                          backgroundColor: AppColors.surfaceContainerLowest,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  SelectableText(
-                    qrValue,
-                    textAlign: TextAlign.center,
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
+          const SizedBox(height: 8),
+          Text(
+            'Bu noktada atık teslimini doğrulamak için QR kodunu okut.',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 18),
+          Center(
+            child: Container(
+              width: 244,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceContainerLowest,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: AppColors.outlineVariant),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.shadow.withValues(alpha: 0.12),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
+              child: QrImageView(
+                data: qrValue,
+                version: QrVersions.auto,
+                size: 216,
+                backgroundColor: AppColors.surfaceContainerLowest,
+                eyeStyle: const QrEyeStyle(
+                  eyeShape: QrEyeShape.square,
+                  color: AppColors.textPrimary,
+                ),
+                dataModuleStyle: const QrDataModuleStyle(
+                  dataModuleShape: QrDataModuleShape.square,
+                  color: AppColors.textPrimary,
+                ),
+              ),
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                await Clipboard.setData(ClipboardData(text: qrValue));
-                if (!dialogContext.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('QR kod kopyalandı.')),
-                );
-              },
-              child: const Text('Kodu Kopyala'),
+          const SizedBox(height: 16),
+          Text(
+            point.name,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.subtitle.copyWith(fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 8),
+          SelectableText(
+            qrValue,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.textSecondary,
             ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Kapat'),
-            ),
-          ],
-        );
-      },
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onCopy,
+                  icon: const Icon(Icons.copy),
+                  label: const Text('Kodu Kopyala'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton(
+                  onPressed: onClose,
+                  child: const Text('Kapat'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -468,6 +528,14 @@ int _distanceMeters(RecyclingPointModel point) {
   final longitudeMeters = (point.longitude - centerLongitude).abs() * 85000;
   final distance = latitudeMeters + longitudeMeters;
   return distance.clamp(180, 2800).round();
+}
+
+String _pointQrValue(RecyclingPointModel point) {
+  final qrCode = point.qrCode.trim();
+  if (qrCode.isNotEmpty) return qrCode;
+  final id = point.id.trim();
+  if (id.isNotEmpty) return id;
+  return 'ATIKAVI_POINT_DEMO';
 }
 
 class PointReportDialog extends ConsumerStatefulWidget {

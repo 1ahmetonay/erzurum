@@ -5,10 +5,10 @@ import 'package:google_sign_in/google_sign_in.dart';
 class AuthRepository {
   AuthRepository({FirebaseAuth? firebaseAuth, GoogleSignIn? googleSignIn})
     : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance,
-      _googleSignIn = googleSignIn ?? GoogleSignIn();
+      _googleSignIn = googleSignIn ?? (kIsWeb ? null : GoogleSignIn());
 
   final FirebaseAuth _firebaseAuth;
-  final GoogleSignIn _googleSignIn;
+  final GoogleSignIn? _googleSignIn;
 
   Stream<User?> authStateChanges() => _firebaseAuth.authStateChanges();
 
@@ -59,7 +59,8 @@ class AuthRepository {
         return await _firebaseAuth.signInWithPopup(googleProvider);
       }
 
-      final googleUser = await _googleSignIn.signIn();
+      final googleSignIn = _googleSignIn ?? GoogleSignIn();
+      final googleUser = await googleSignIn.signIn();
       if (googleUser == null) return null;
 
       final googleAuth = await googleUser.authentication;
@@ -109,7 +110,7 @@ class AuthRepository {
   Future<void> signOut() async {
     try {
       if (!kIsWeb) {
-        await _googleSignIn.signOut();
+        await _googleSignIn?.signOut();
       }
       await _firebaseAuth.signOut();
     } on FirebaseAuthException catch (error) {

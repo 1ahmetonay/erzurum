@@ -53,6 +53,10 @@
 	<string>LaunchScreen</string>
 	<key>NSCameraUsageDescription</key>
 	<string>AtıkAvı Erzurum, QR kodları okutmak ve atık fotoğrafı çekmek için kameraya erişir.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>AtıkAvı Erzurum, kirli bölge bildirimine mevcut konumunuzu eklemek için konumunuza erişir.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>AtıkAvı Erzurum, kirli bölge ve atık fotoğraflarını seçmeniz için fotoğraf arşivinize erişir.</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
 	<key>UISupportedInterfaceOrientations</key>

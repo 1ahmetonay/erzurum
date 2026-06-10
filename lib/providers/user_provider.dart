@@ -20,3 +20,8 @@ final currentUserProvider = StreamProvider<UserModel?>((ref) {
     error: (_, _) => Stream.value(null),
   );
 });
+
+final currentUserIsAdminProvider = Provider<bool>((ref) {
+  final user = ref.watch(currentUserProvider).valueOrNull;
+  return user?.role == 'admin';
+});

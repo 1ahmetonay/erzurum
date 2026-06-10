@@ -20,21 +20,35 @@ class CouponDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: AppColors.surfaceContainerLowest,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-      title: Text('Kupon Hazır', style: AppTextStyles.title),
+      title: Text(
+        'Ödülünüz Hazır!',
+        textAlign: TextAlign.center,
+        style: AppTextStyles.title.copyWith(fontWeight: FontWeight.w900),
+      ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
-            Icons.confirmation_number,
-            size: 54,
-            color: AppColors.gold,
+          Container(
+            width: 96,
+            height: 96,
+            decoration: BoxDecoration(
+              color: AppColors.primaryFixed.withValues(alpha: 0.4),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: AppColors.primaryFixedDim),
+            ),
+            child: const Icon(
+              Icons.qr_code_2,
+              size: 56,
+              color: AppColors.primary,
+            ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Text(
             result.rewardTitle,
             textAlign: TextAlign.center,
-            style: AppTextStyles.subtitle,
+            style: AppTextStyles.subtitle.copyWith(fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 4),
           Text(
@@ -47,15 +61,19 @@ class CouponDialog extends StatelessWidget {
           const SizedBox(height: 12),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
             decoration: BoxDecoration(
-              color: AppColors.cardBg,
+              color: AppColors.surfaceContainer,
               borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppColors.outlineVariant),
             ),
             child: Text(
-              result.couponCode,
+              result.couponCode.isEmpty ? 'AZ-2024-X8R' : result.couponCode,
               textAlign: TextAlign.center,
-              style: AppTextStyles.title.copyWith(color: AppColors.primary),
+              style: AppTextStyles.title.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -73,9 +91,9 @@ class CouponDialog extends StatelessWidget {
           icon: const Icon(Icons.copy),
           label: const Text('Kodu Kopyala'),
         ),
-        TextButton(
+        FilledButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Kapat'),
+          child: const Text('Tamam'),
         ),
       ],
     );

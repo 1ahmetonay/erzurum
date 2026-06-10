@@ -16,6 +16,17 @@ Client transaction ile puan artirma/dusurme production icin ideal degildir.
 
 - QR puan verme Cloud Functions + Admin SDK ile dogrulanmalidir.
 - Task bonus puanlari Cloud Functions tarafinda hesaplanmalidir.
+- Temizlik etkinligi tamamlama, kanit fotografi ve katilimci Dadas puan dagitimi MVP'de client transaction ile yapilir; production'da Cloud Functions + Admin SDK ile dogrulanmalidir.
+- Admin onay akisi MVP'de `users/{uid}.role == "admin"` kontroluyle client transaction uzerinden calisir; production'da admin role yonetimi custom claims ve server-side yetkilendirme ile korunmalidir.
+- Temizlik puan dagitimi yalnizca admin onayindan sonra yapilmalidir; production'da kullanicilarin kendi puanlarini dogrudan artirmasi Cloud Functions disinda engellenmelidir.
+- Yeni Cloud Functions hazirligi admin onay ve role yonetimini callable functions tarafina tasir:
+  - `approveCleanupEvent`
+  - `rejectCleanupEvent`
+  - `setAdminClaim`
+- Callable functions admin kontrolunu `context.auth.token.admin === true` custom claim'i ile yapar.
+- Ilk admin kullanicisi uygulama icinden atanamaz; Firebase Admin SDK veya guvenli bir CLI script ile manuel custom claim verilmelidir. Firestore `users/{uid}.role` alanini da `admin` olarak senkron tut.
+- Emulator testinde Functions, Firestore ve Auth emulatorlari birlikte calistirilmelidir.
+- Emulator test adimlari icin `docs/FUNCTIONS_EMULATOR_TEST_GUIDE.md`, ilk admin operasyonu icin `docs/FIRST_ADMIN_SETUP.md` dosyasini kullan.
 - Reward redemption, kullanici puan dusumu ve stok azalmasi tek bir server-side transaction ile yapilmalidir.
 - Leaderboard guncellemeleri Cloud Functions ile uretilmelidir.
 - Admin/belediye paneli custom claims ile ayrilmali, point report incelemesi client query'lerine acilmamalidir.

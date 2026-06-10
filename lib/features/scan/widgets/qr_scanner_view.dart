@@ -4,7 +4,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 
-enum ScanCameraMode { qr, barcode }
+enum ScanCameraMode { qr, barcode, photo }
 
 class QrScannerView extends StatefulWidget {
   const QrScannerView({
@@ -34,19 +34,7 @@ class _QrScannerViewState extends State<QrScannerView> {
     super.initState();
     _controller = MobileScannerController(
       detectionSpeed: DetectionSpeed.noDuplicates,
-      formats: widget.mode == ScanCameraMode.qr
-          ? const [BarcodeFormat.qrCode]
-          : const [
-              BarcodeFormat.code128,
-              BarcodeFormat.code39,
-              BarcodeFormat.code93,
-              BarcodeFormat.codabar,
-              BarcodeFormat.ean13,
-              BarcodeFormat.ean8,
-              BarcodeFormat.itf,
-              BarcodeFormat.upcA,
-              BarcodeFormat.upcE,
-            ],
+      formats: _formatsForMode(widget.mode),
     );
   }
 
@@ -80,12 +68,10 @@ class _QrScannerViewState extends State<QrScannerView> {
             ),
             Center(
               child: Container(
-                width: widget.mode == ScanCameraMode.qr ? 210 : 260,
-                height: widget.mode == ScanCameraMode.qr ? 210 : 116,
+                width: _frameWidth,
+                height: _frameHeight,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(
-                    widget.mode == ScanCameraMode.qr ? 24 : 18,
-                  ),
+                  borderRadius: BorderRadius.circular(_frameRadius),
                   border: Border.all(color: AppColors.primaryFixed, width: 4),
                 ),
               ),
@@ -115,9 +101,7 @@ class _QrScannerViewState extends State<QrScannerView> {
               right: 24,
               bottom: 24,
               child: Text(
-                widget.mode == ScanCameraMode.qr
-                    ? 'QR kodu çerçeve içine hizala'
-                    : 'Barkodu çerçeve içine hizala',
+                _instructionText,
                 textAlign: TextAlign.center,
                 style: AppTextStyles.body.copyWith(
                   color: AppColors.textOnPrimary,
@@ -136,6 +120,7 @@ class _QrScannerViewState extends State<QrScannerView> {
   }
 
   void _handleDetect(BarcodeCapture capture) {
+    if (widget.mode == ScanCameraMode.photo) return;
     if (widget.isProcessing || _isProcessing) return;
 
     String? code;
@@ -172,9 +157,64 @@ class _QrScannerViewState extends State<QrScannerView> {
     if (error.errorCode == MobileScannerErrorCode.permissionDenied) {
       return 'Kamera izni verilmedi. Ayarlardan kamera erişimine izin ver.';
     }
-    return widget.mode == ScanCameraMode.qr
-        ? 'QR tarama bu platformda desteklenmeyebilir. Demo QR butonlarını kullanabilirsin.'
-        : 'Barkod tarama bu platformda desteklenmeyebilir. Demo barkod kartını kullanabilirsin.';
+    return switch (widget.mode) {
+      ScanCameraMode.qr =>
+        'QR tarama bu platformda desteklenmeyebilir. Demo QR butonlarını kullanabilirsin.',
+      ScanCameraMode.barcode =>
+        'Barkod tarama bu platformda desteklenmeyebilir. Demo barkod kartını kullanabilirsin.',
+      ScanCameraMode.photo =>
+        'Fotoğraf önizleme bu platformda desteklenmeyebilir. Demo foto butonunu kullanabilirsin.',
+    };
+  }
+
+  List<BarcodeFormat> _formatsForMode(ScanCameraMode mode) {
+    return switch (mode) {
+      ScanCameraMode.qr => const [BarcodeFormat.qrCode],
+      ScanCameraMode.barcode => const [
+        BarcodeFormat.code128,
+        BarcodeFormat.code39,
+        BarcodeFormat.code93,
+        BarcodeFormat.codabar,
+        BarcodeFormat.ean13,
+        BarcodeFormat.ean8,
+        BarcodeFormat.itf,
+        BarcodeFormat.upcA,
+        BarcodeFormat.upcE,
+      ],
+      ScanCameraMode.photo => const [BarcodeFormat.qrCode],
+    };
+  }
+
+  double get _frameWidth {
+    return switch (widget.mode) {
+      ScanCameraMode.qr => 210,
+      ScanCameraMode.barcode => 260,
+      ScanCameraMode.photo => 250,
+    };
+  }
+
+  double get _frameHeight {
+    return switch (widget.mode) {
+      ScanCameraMode.qr => 210,
+      ScanCameraMode.barcode => 116,
+      ScanCameraMode.photo => 250,
+    };
+  }
+
+  double get _frameRadius {
+    return switch (widget.mode) {
+      ScanCameraMode.qr => 24,
+      ScanCameraMode.barcode => 18,
+      ScanCameraMode.photo => 28,
+    };
+  }
+
+  String get _instructionText {
+    return switch (widget.mode) {
+      ScanCameraMode.qr => 'QR kodu çerçeve içine hizala',
+      ScanCameraMode.barcode => 'Barkodu çerçeve içine hizala',
+      ScanCameraMode.photo => 'Fotoğraf için atığı çerçeveye hizala',
+    };
   }
 }
 

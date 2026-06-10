@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../core/constants/demo_scan_data.dart';
 import '../models/scan_result_model.dart';
 import '../models/waste_log_model.dart';
 import '../repositories/waste_repository.dart';
@@ -92,15 +93,39 @@ class ScanController extends AutoDisposeAsyncNotifier<ScanResultModel?> {
             wasteType: wasteType,
             photo: photo,
           );
-      const result = ScanResultModel(
-        wasteLogId: null,
+      final result = ScanResultModel(
+        wasteLogId: 'PHOTO_PENDING_${DateTime.now().millisecondsSinceEpoch}',
         pointsEarned: 0,
         bonusPoints: 0,
         completedTaskTitles: [],
         message: 'Fotoğraf kaydın inceleme için alındı.',
         isPhotoPending: true,
       );
-      state = const AsyncData(result);
+      state = AsyncData(result);
+      return result;
+    } on Object catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      Error.throwWithStackTrace(error, stackTrace);
+    }
+  }
+
+  Future<ScanResultModel> submitDemoPhotoWaste({
+    required String wasteType,
+  }) async {
+    state = const AsyncLoading();
+    try {
+      await Future<void>.delayed(const Duration(milliseconds: 450));
+      final result = ScanResultModel(
+        wasteLogId:
+            '${DemoScanData.photoLabel}_${DateTime.now().millisecondsSinceEpoch}',
+        pointsEarned: 0,
+        bonusPoints: 0,
+        completedTaskTitles: [],
+        message:
+            'Fotoğraf bildirimin alındı. İnceleme sonrası puan kazanabilirsin.',
+        isPhotoPending: true,
+      );
+      state = AsyncData(result);
       return result;
     } on Object catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);
