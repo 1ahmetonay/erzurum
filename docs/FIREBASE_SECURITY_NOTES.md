@@ -9,6 +9,8 @@ Bu kurallar AtikAvi Erzurum MVP/demo akislari icin yazildi.
 - `recycling_points`, `tasks` ve leaderboard entry yazimlari client tarafina kapatilir.
 - `rewards` seed/admin verisi olarak korunur; demo redemption akisi icin yalnizca `stockCount` degerinin 1 azalmasina ve `updatedAt` degisimine izin verilir.
 - Storage `waste_photos/{uid}/{fileName}` yolu yalnizca ilgili authenticated kullaniciya aciktir.
+- Storage `dirty_area_photos/{uid}/{fileName}` yolu yalnizca ilgili authenticated kullaniciya aciktir; dosya en fazla 5 MB ve `image/*` tipinde olmalidir.
+- `dirty_areas`, `cleanup_events`, `cleanup_groups`, `group_invitations` ve `user_connections` okumasi MVP'de authenticated kullanicilara aciktir. Client yazimlari kaydi olusturan veya uyelik/davet/baglanti tarafinda dogrudan ilgili kullanici ile sinirlidir.
 
 ## Production Notlari
 
@@ -57,6 +59,14 @@ Tum rules deploy:
 ```sh
 firebase deploy --only firestore:rules,storage
 ```
+
+Deploy oncesi rules kontrolu:
+
+```sh
+firebase emulators:start --only firestore,storage
+```
+
+Emulatorler rules dosyalarini hatasiz yukleyip Firestore `8080` ve Storage `9199` portlarinda dinlemeye baslamadan deploy etme.
 
 Deploy oncesi onerilen Flutter kontrolleri:
 

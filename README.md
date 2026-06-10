@@ -105,6 +105,10 @@ Debug modda `/dev/seed` ekranı Firestore demo verilerini yükler. Route yalnız
 
 Detaylı demo akışı ve QR içerikleri için [docs/DEMO_AKISI.md](/Users/ahmetonay/projects/atikavi_erzurum/docs/DEMO_AKISI.md) dosyasını kullan.
 
+## Belediye Sunum Dokümanı
+
+Vatandaş tarafındaki işlevlerin, belediyeye sağlayabileceği katkıların ve mevcut MVP sınırlarının sade özeti için [AtıkAvı Erzurum Kullanıcı İşlevleri ve Belediyeye Sağladığı Katkılar](docs/BELEDIYE_KULLANICI_ISLEVLERI.md) dokümanına bak.
+
 ## Android Build
 
 Android APK/AAB hazırlığı, package name, izinler ve release signing notları için [docs/ANDROID_BUILD.md](/Users/ahmetonay/projects/atikavi_erzurum/docs/ANDROID_BUILD.md) dosyasına bak.

@@ -33,14 +33,14 @@ service firebase.storage {
     }
 
     match /dirty_area_photos/{userId}/{fileName} {
-      allow read: if signedIn();
+      allow read: if isOwner(userId);
 
-      allow write: if isOwner(userId)
+      allow create, update: if isOwner(userId)
         && request.resource != null
-        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.size <= 5 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
 
-      allow delete: if false;
+      allow delete: if isOwner(userId);
     }
 
     match /{allPaths=**} {
