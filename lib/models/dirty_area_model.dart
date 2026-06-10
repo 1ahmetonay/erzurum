@@ -11,8 +11,21 @@ class DirtyAreaWasteTypes {
   static const metal = 'metal';
   static const organic = 'organic';
   static const mixed = 'mixed';
+  static const household = 'household';
+  static const construction = 'construction';
+  static const other = 'other';
 
-  static const values = [plastic, glass, paper, metal, organic, mixed];
+  static const values = [
+    plastic,
+    glass,
+    paper,
+    metal,
+    organic,
+    mixed,
+    household,
+    construction,
+    other,
+  ];
 }
 
 class DirtyAreaStatuses {

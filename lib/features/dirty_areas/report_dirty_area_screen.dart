@@ -13,6 +13,7 @@ import '../../providers/user_provider.dart';
 import '../../repositories/dirty_area_repository.dart';
 import '../../services/dirty_area_photo_service.dart';
 import '../../services/location_service.dart';
+import 'widgets/report_dirty_area_sections.dart';
 
 class ReportDirtyAreaScreen extends ConsumerStatefulWidget {
   const ReportDirtyAreaScreen({super.key});
@@ -25,143 +26,173 @@ class ReportDirtyAreaScreen extends ConsumerStatefulWidget {
 class _ReportDirtyAreaScreenState extends ConsumerState<ReportDirtyAreaScreen> {
   static const _erzurumLatitude = 39.9055;
   static const _erzurumLongitude = 41.2658;
+  static const _severityValues = [1, 2, 4, 5];
+  static const _wasteOptions = [
+    ReportWasteOption(
+      value: DirtyAreaWasteTypes.plastic,
+      label: 'Plastik atık',
+      icon: Icons.recycling_outlined,
+    ),
+    ReportWasteOption(
+      value: DirtyAreaWasteTypes.glass,
+      label: 'Cam/şişe',
+      icon: Icons.wine_bar_outlined,
+    ),
+    ReportWasteOption(
+      value: DirtyAreaWasteTypes.paper,
+      label: 'Kağıt/karton',
+      icon: Icons.description_outlined,
+    ),
+    ReportWasteOption(
+      value: DirtyAreaWasteTypes.household,
+      label: 'Evsel atık',
+      icon: Icons.delete_outline,
+    ),
+    ReportWasteOption(
+      value: DirtyAreaWasteTypes.construction,
+      label: 'İnşaat atığı',
+      icon: Icons.construction_outlined,
+    ),
+    ReportWasteOption(
+      value: DirtyAreaWasteTypes.other,
+      label: 'Diğer',
+      icon: Icons.more_horiz,
+    ),
+  ];
 
   final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _addressController = TextEditingController();
   final _imagePicker = ImagePicker();
-  final Set<String> _selectedWasteTypes = {DirtyAreaWasteTypes.mixed};
+  final Set<String> _selectedWasteTypes = {DirtyAreaWasteTypes.plastic};
+
   XFile? _selectedPhoto;
   double _latitude = _erzurumLatitude;
   double _longitude = _erzurumLongitude;
+  String _addressText = 'Erzurum merkez';
   bool _hasSelectedLocation = false;
-  int _severityLevel = 3;
+  int _severityIndex = 2;
   bool _isSubmitting = false;
 
   @override
   void dispose() {
-    _titleController.dispose();
     _descriptionController.dispose();
-    _addressController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final locationState = ref.watch(currentLocationControllerProvider);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Kirli Bölge Bildir')),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        centerTitle: true,
+        leading: IconButton(
+          onPressed: _close,
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Geri',
+        ),
+        title: Text(
+          'Kirli Bölge Bildir',
+          style: AppTextStyles.title.copyWith(
+            color: AppColors.primary,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.notifications_none_outlined),
+            color: AppColors.primary,
+            tooltip: 'Bildirimler',
+          ),
+          const SizedBox(width: 4),
+        ],
+      ),
       body: SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(18, 12, 18, 28),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: const EdgeInsets.fromLTRB(18, 8, 18, 30),
             children: [
-              TextFormField(
-                controller: _titleController,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'Başlık',
-                  hintText: 'Örn. Yakutiye park çevresi',
-                ),
-                validator: (value) =>
-                    _requiredText(value, 'Başlık boş olamaz.'),
+              Text(
+                'Çevrendeki kirli alanları bildir, Erzurum’u birlikte temiz tutalım.',
+                style: AppTextStyles.body.copyWith(fontSize: 16, height: 1.55),
               ),
-              const SizedBox(height: 14),
-              TextFormField(
-                controller: _descriptionController,
-                minLines: 3,
-                maxLines: 5,
-                decoration: const InputDecoration(
-                  labelText: 'Açıklama',
-                  hintText: 'Atık yoğunluğunu ve gözlemini kısaca yaz.',
-                ),
-                validator: (value) =>
-                    _requiredText(value, 'Açıklama boş olamaz.'),
-              ),
-              const SizedBox(height: 14),
-              TextFormField(
-                controller: _addressController,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'Adres / metin konum',
-                  hintText: 'Mahalle, cadde veya yakın nokta',
-                ),
-                validator: (value) =>
-                    _requiredText(value, 'Adres bilgisi boş olamaz.'),
-              ),
-              const SizedBox(height: 14),
-              _LocationSection(
+              const SizedBox(height: 28),
+              ReportLocationSection(
                 latitude: _latitude,
                 longitude: _longitude,
                 hasSelectedLocation: _hasSelectedLocation,
-                isLoading: ref
-                    .watch(currentLocationControllerProvider)
-                    .isLoading,
+                isLoading: locationState.isLoading,
                 onUseCurrentLocation: _useCurrentLocation,
                 onSelectLocation: _showManualLocationDialog,
               ),
-              const SizedBox(height: 20),
-              Text(
-                'Kirlilik seviyesi',
-                style: AppTextStyles.subtitle.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              Slider(
-                value: _severityLevel.toDouble(),
-                min: 1,
-                max: 5,
-                divisions: 4,
-                label: '$_severityLevel/5',
-                onChanged: (value) {
-                  setState(() => _severityLevel = value.round());
-                },
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Atık türleri',
-                style: AppTextStyles.subtitle.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final wasteType in DirtyAreaWasteTypes.values)
-                    FilterChip(
-                      label: Text(_wasteTypeLabel(wasteType)),
-                      selected: _selectedWasteTypes.contains(wasteType),
-                      onSelected: (selected) {
-                        setState(() {
-                          if (selected) {
-                            _selectedWasteTypes.add(wasteType);
-                          } else if (_selectedWasteTypes.length > 1) {
-                            _selectedWasteTypes.remove(wasteType);
-                          }
-                        });
-                      },
-                    ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              _PhotoSection(
+              const SizedBox(height: 30),
+              ReportPhotoSection(
                 photo: _selectedPhoto,
                 onPickPhoto: _showPhotoSourceSheet,
                 onRemovePhoto: () => setState(() => _selectedPhoto = null),
               ),
+              const SizedBox(height: 32),
+              ReportWasteGrid(
+                options: _wasteOptions,
+                selectedValues: _selectedWasteTypes,
+                onToggle: _toggleWasteType,
+              ),
+              const SizedBox(height: 30),
+              ReportSeveritySelector(
+                selectedIndex: _severityIndex,
+                onSelected: (index) {
+                  setState(() => _severityIndex = index);
+                },
+              ),
+              const SizedBox(height: 30),
+              const ReportSectionTitle('Açıklama'),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _descriptionController,
+                minLines: 5,
+                maxLines: 7,
+                maxLength: 1000,
+                decoration: const InputDecoration(
+                  hintText: 'Kirlilik hakkında kısa açıklama yaz...',
+                  alignLabelWithHint: true,
+                  counterText: '',
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Açıklama boş olamaz.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 26),
+              const ReportInfoBox(),
               const SizedBox(height: 22),
               FilledButton.icon(
                 onPressed: _isSubmitting ? null : _submit,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(62),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  textStyle: AppTextStyles.title.copyWith(
+                    color: AppColors.onPrimary,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
                 icon: _isSubmitting
                     ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.onPrimary,
+                        ),
                       )
-                    : const Icon(Icons.send_outlined),
+                    : const Icon(Icons.send_outlined, size: 28),
                 label: const Text('Bildirimi Gönder'),
               ),
             ],
@@ -169,6 +200,24 @@ class _ReportDirtyAreaScreenState extends ConsumerState<ReportDirtyAreaScreen> {
         ),
       ),
     );
+  }
+
+  void _close() {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/dirty-areas');
+    }
+  }
+
+  void _toggleWasteType(String value) {
+    setState(() {
+      if (_selectedWasteTypes.contains(value)) {
+        if (_selectedWasteTypes.length > 1) _selectedWasteTypes.remove(value);
+      } else {
+        _selectedWasteTypes.add(value);
+      }
+    });
   }
 
   Future<void> _submit() async {
@@ -197,18 +246,19 @@ class _ReportDirtyAreaScreenState extends ConsumerState<ReportDirtyAreaScreen> {
       final photoUrl = await ref
           .read(dirtyAreaPhotoServiceProvider)
           .uploadDirtyAreaPhoto(userId: firebaseUser.uid, photo: selectedPhoto);
+      final primaryWasteType = _selectedWasteTypes.first;
       final dirtyArea = DirtyAreaModel(
         id: '',
-        title: _titleController.text.trim(),
+        title: '${_wasteTypeLabel(primaryWasteType)} bildirimi',
         description: _descriptionController.text.trim(),
         reportedByUserId: firebaseUser.uid,
         reportedByUsername: username,
         latitude: _latitude,
         longitude: _longitude,
-        addressText: _addressController.text.trim(),
+        addressText: _addressText,
         photoUrl: photoUrl,
         wasteTypes: _selectedWasteTypes.toList()..sort(),
-        severityLevel: _severityLevel,
+        severityLevel: _severityValues[_severityIndex],
         status: DirtyAreaStatuses.reported,
         participantCount: 0,
         createdAt: now,
@@ -243,6 +293,7 @@ class _ReportDirtyAreaScreenState extends ConsumerState<ReportDirtyAreaScreen> {
       setState(() {
         _latitude = location.latitude;
         _longitude = location.longitude;
+        _addressText = 'Mevcut konum, Erzurum';
         _hasSelectedLocation = true;
       });
       _showMessage('Mevcut konum eklendi.');
@@ -267,7 +318,7 @@ class _ReportDirtyAreaScreenState extends ConsumerState<ReportDirtyAreaScreen> {
     final result = await showDialog<AppLocation>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Konum Seç'),
+        title: const Text('Haritadan Konum Seç'),
         content: Form(
           key: formKey,
           child: Column(
@@ -322,6 +373,7 @@ class _ReportDirtyAreaScreenState extends ConsumerState<ReportDirtyAreaScreen> {
     setState(() {
       _latitude = result.latitude;
       _longitude = result.longitude;
+      _addressText = 'Haritadan seçilen konum, Erzurum';
       _hasSelectedLocation = true;
     });
   }
@@ -370,11 +422,6 @@ class _ReportDirtyAreaScreenState extends ConsumerState<ReportDirtyAreaScreen> {
     }
   }
 
-  String? _requiredText(String? value, String message) {
-    if (value == null || value.trim().isEmpty) return message;
-    return null;
-  }
-
   void _showMessage(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -382,135 +429,14 @@ class _ReportDirtyAreaScreenState extends ConsumerState<ReportDirtyAreaScreen> {
   }
 }
 
-class _LocationSection extends StatelessWidget {
-  const _LocationSection({
-    required this.latitude,
-    required this.longitude,
-    required this.hasSelectedLocation,
-    required this.isLoading,
-    required this.onUseCurrentLocation,
-    required this.onSelectLocation,
-  });
-
-  final double latitude;
-  final double longitude;
-  final bool hasSelectedLocation;
-  final bool isLoading;
-  final VoidCallback onUseCurrentLocation;
-  final VoidCallback onSelectLocation;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Konum', style: AppTextStyles.subtitle),
-          const SizedBox(height: 8),
-          Text(
-            hasSelectedLocation
-                ? 'Enlem: ${latitude.toStringAsFixed(6)}\nBoylam: ${longitude.toStringAsFixed(6)}'
-                : 'Konum seçilmezse Erzurum merkez kullanılacak.',
-            style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              FilledButton.tonalIcon(
-                onPressed: isLoading ? null : onUseCurrentLocation,
-                icon: isLoading
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.my_location_outlined),
-                label: const Text('Mevcut Konumumu Kullan'),
-              ),
-              OutlinedButton.icon(
-                onPressed: onSelectLocation,
-                icon: const Icon(Icons.map_outlined),
-                label: const Text('Konum Seç'),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PhotoSection extends StatelessWidget {
-  const _PhotoSection({
-    required this.photo,
-    required this.onPickPhoto,
-    required this.onRemovePhoto,
-  });
-
-  final XFile? photo;
-  final VoidCallback onPickPhoto;
-  final VoidCallback onRemovePhoto;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (photo != null) ...[
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: AspectRatio(
-                aspectRatio: 16 / 9,
-                child: FutureBuilder(
-                  future: photo!.readAsBytes(),
-                  builder: (context, snapshot) {
-                    final bytes = snapshot.data;
-                    if (bytes == null) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    return Image.memory(bytes, fit: BoxFit.cover);
-                  },
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextButton.icon(
-              onPressed: onRemovePhoto,
-              icon: const Icon(Icons.delete_outline),
-              label: const Text('Fotoğrafı Kaldır'),
-            ),
-          ] else
-            OutlinedButton.icon(
-              onPressed: onPickPhoto,
-              icon: const Icon(Icons.add_a_photo_outlined),
-              label: const Text('Fotoğraf Ekle'),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
 String _wasteTypeLabel(String wasteType) {
   return switch (wasteType) {
-    DirtyAreaWasteTypes.plastic => 'Plastik',
-    DirtyAreaWasteTypes.glass => 'Cam',
-    DirtyAreaWasteTypes.paper => 'Kağıt',
+    DirtyAreaWasteTypes.plastic => 'Plastik atık',
+    DirtyAreaWasteTypes.glass => 'Cam/şişe',
+    DirtyAreaWasteTypes.paper => 'Kağıt/karton',
+    DirtyAreaWasteTypes.household => 'Evsel atık',
+    DirtyAreaWasteTypes.construction => 'İnşaat atığı',
+    DirtyAreaWasteTypes.other => 'Diğer atık',
     DirtyAreaWasteTypes.metal => 'Metal',
     DirtyAreaWasteTypes.organic => 'Organik',
     DirtyAreaWasteTypes.mixed => 'Karışık',

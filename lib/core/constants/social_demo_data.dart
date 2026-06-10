@@ -32,6 +32,16 @@ class SocialDemoData {
         createdAt: now,
         updatedAt: now,
       ),
+      UserConnectionModel(
+        id: '${idPrefix}connection_elif',
+        requesterUserId: currentUserId,
+        requesterUsername: 'AtıkAvı Üyesi',
+        receiverUserId: '${idPrefix}user_elif',
+        receiverUsername: 'Elif Erzurum',
+        status: UserConnectionStatuses.accepted,
+        createdAt: now,
+        updatedAt: now,
+      ),
     ];
   }
 
@@ -42,6 +52,16 @@ class SocialDemoData {
         id: '${idPrefix}request_zeynep',
         requesterUserId: '${idPrefix}user_zeynep',
         requesterUsername: 'Zeynep Demir',
+        receiverUserId: currentUserId,
+        receiverUsername: 'AtıkAvı Üyesi',
+        status: UserConnectionStatuses.pending,
+        createdAt: now,
+        updatedAt: now,
+      ),
+      UserConnectionModel(
+        id: '${idPrefix}request_ahmet',
+        requesterUserId: '${idPrefix}user_ahmet',
+        requesterUsername: 'Ahmet Dadaş',
         receiverUserId: currentUserId,
         receiverUsername: 'AtıkAvı Üyesi',
         status: UserConnectionStatuses.pending,

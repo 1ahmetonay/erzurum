@@ -342,6 +342,9 @@ String _wasteTypeLabel(String wasteType) {
     DirtyAreaWasteTypes.metal => 'Metal',
     DirtyAreaWasteTypes.organic => 'Organik',
     DirtyAreaWasteTypes.mixed => 'Karışık',
+    DirtyAreaWasteTypes.household => 'Evsel atık',
+    DirtyAreaWasteTypes.construction => 'İnşaat atığı',
+    DirtyAreaWasteTypes.other => 'Diğer',
     _ => wasteType,
   };
 }

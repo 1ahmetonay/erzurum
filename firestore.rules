@@ -83,7 +83,10 @@ service cloud.firestore {
           'paper',
           'metal',
           'organic',
-          'mixed'
+          'mixed',
+          'household',
+          'construction',
+          'other'
         ]);
     }
 

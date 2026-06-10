@@ -70,6 +70,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/admin/users',
         builder: (context, state) => const AdminUsersScreen(),
       ),
+      GoRoute(
+        path: '/report-dirty-area',
+        builder: (context, state) => const ReportDirtyAreaScreen(),
+      ),
+      GoRoute(
+        path: '/friends',
+        builder: (context, state) => const FriendsScreen(),
+      ),
+      GoRoute(
+        path: '/group-invitations',
+        builder: (context, state) => const GroupInvitationsScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return AppBottomNav(navigationShell: navigationShell);
@@ -122,20 +134,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 ),
               ),
               GoRoute(
-                path: '/friends',
-                builder: (context, state) => const FriendsScreen(),
-              ),
-              GoRoute(
                 path: '/friend-requests',
                 builder: (context, state) => const FriendRequestsScreen(),
-              ),
-              GoRoute(
-                path: '/group-invitations',
-                builder: (context, state) => const GroupInvitationsScreen(),
-              ),
-              GoRoute(
-                path: '/report-dirty-area',
-                builder: (context, state) => const ReportDirtyAreaScreen(),
               ),
             ],
           ),
