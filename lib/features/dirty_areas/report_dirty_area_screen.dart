@@ -13,6 +13,7 @@ import '../../providers/user_provider.dart';
 import '../../repositories/dirty_area_repository.dart';
 import '../../services/dirty_area_photo_service.dart';
 import '../../services/location_service.dart';
+import '../../shared/widgets/app_status_dialog.dart';
 import 'widgets/report_dirty_area_sections.dart';
 
 class ReportDirtyAreaScreen extends ConsumerStatefulWidget {
@@ -203,11 +204,8 @@ class _ReportDirtyAreaScreenState extends ConsumerState<ReportDirtyAreaScreen> {
   }
 
   void _close() {
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      context.go('/dirty-areas');
-    }
+    if (_isSubmitting) return;
+    context.go('/home');
   }
 
   void _toggleWasteType(String value) {
@@ -272,16 +270,26 @@ class _ReportDirtyAreaScreenState extends ConsumerState<ReportDirtyAreaScreen> {
         const SnackBar(content: Text('Kirli bölge bildirimi oluşturuldu.')),
       );
     } on DirtyAreaRepositoryException catch (error) {
-      if (mounted) _showMessage(error.message);
+      if (mounted) await _showSubmissionError(error.message);
     } on DirtyAreaPhotoException catch (error) {
-      if (mounted) _showMessage(error.message);
+      if (mounted) await _showSubmissionError(error.message);
     } on Object {
       if (mounted) {
-        _showMessage('Bildirim gönderilemedi. Biraz sonra tekrar dene.');
+        await _showSubmissionError(
+          'Bildirim gönderilemedi. Biraz sonra tekrar dene.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
+  }
+
+  Future<void> _showSubmissionError(String message) {
+    return AppStatusDialog.showError(
+      context,
+      title: 'Bildirim yüklenemedi',
+      message: message,
+    );
   }
 
   Future<void> _useCurrentLocation() async {
